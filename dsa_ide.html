@@ -333,7 +333,7 @@
       100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
     }
 
-    /* ── STATS MODAL ── */
+/* ── STATS MODAL ── */
     #stats-modal-bg {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
@@ -793,6 +793,37 @@ class Program {
         Console.WriteLine(sol.IsPalindrome("A man, a plan, a canal: Panama")); // true
         Console.WriteLine(sol.IsPalindrome("race a car"));  // false
         Console.WriteLine(sol.IsPalindrome(" "));           // true
+    }
+}`
+  },
+  {
+    id: 167, title: "Two Sum II - Input Array Is Sorted", difficulty: "easy", pattern: "Two Pointers",
+    description: `Given a <strong>1-indexed</strong> array of integers <code>numbers</code> that is already sorted in non-decreasing order, find two numbers such that they add up to a specific <code>target</code> number.<br><br>Return the indices of the two numbers, <code>index1</code> and <code>index2</code>, added by one as an integer array <code>[index1, index2]</code> of length 2.<br><br>You may not use the same element twice. There is exactly one solution.`,
+    examples: [
+      { input: "numbers = [2,7,11,15], target = 9", output: "[1,2]", explanation: "numbers[0] + numbers[1] = 2 + 7 = 9" },
+      { input: "numbers = [2,3,4], target = 6", output: "[1,3]" },
+      { input: "numbers = [-1,0], target = -1", output: "[1,2]" }
+    ],
+    constraints: ["2 <= numbers.length <= 3 * 10^4", "numbers is sorted in non-decreasing order", "Exactly one solution exists", "Must use O(1) extra space"],
+    hint: "Two pointers L and R. If sum < target move L right. If sum > target move R left. If equal return [L+1, R+1] (1-indexed).",
+    starterCode: `public class Solution {
+    public int[] TwoSum(int[] numbers, int target) {
+        // Your solution here
+
+    }
+}
+
+class Program {
+    static void Main() {
+        var sol = new Solution();
+        var r1 = sol.TwoSum(new int[]{2,7,11,15}, 9);
+        Console.WriteLine(string.Join(",", r1)); // 1,2
+
+        var r2 = sol.TwoSum(new int[]{2,3,4}, 6);
+        Console.WriteLine(string.Join(",", r2)); // 1,3
+
+        var r3 = sol.TwoSum(new int[]{-1,0}, -1);
+        Console.WriteLine(string.Join(",", r3)); // 1,2
     }
 }`
   },
@@ -4081,7 +4112,14 @@ let achievementBusy = false;
 let lastRunHadOutput = false;
 
 // ─── STORAGE HELPERS ─────────────────────────────────────────────────────────
-function getSolved()   { try { return JSON.parse(localStorage.getItem('dsa_solved') || '[]'); } catch(e) { return []; } }
+function getSolved()     { try { return JSON.parse(localStorage.getItem('dsa_solved') || '[]'); } catch(e) { return []; } }
+function getSolveDates() { try { return JSON.parse(localStorage.getItem('dsa_solve_dates') || '{}'); } catch(e) { return {}; } }
+function addSolveDate(pid) {
+  const today = new Date().toISOString().slice(0, 10);
+  const dates = getSolveDates();
+  if (!dates[today]) dates[today] = [];
+  if (!dates[today].includes(pid)) { dates[today].push(pid); localStorage.setItem('dsa_solve_dates', JSON.stringify(dates)); scheduleSyncToFile(); }
+}
 function getXP()       { return parseInt(localStorage.getItem('dsa_xp') || '0', 10); }
 function getStreak()   { return parseInt(localStorage.getItem('dsa_streak_count') || '0', 10); }
 function getAchs()     { try { return JSON.parse(localStorage.getItem('dsa_achievements') || '[]'); } catch(e) { return []; } }
@@ -4134,6 +4172,7 @@ function collectAllProgress() {
   }
   return {
     solved:       getSolved(),
+    solve_dates:  getSolveDates(),
     xp:           getXP(),
     streak_count: getStreak(),
     streak_date:  localStorage.getItem('dsa_streak_date') || '',
@@ -4172,6 +4211,7 @@ async function loadFromFile() {
 
     // Restore into localStorage (file wins over stale localStorage)
     if (d.solved)       localStorage.setItem('dsa_solved',        JSON.stringify(d.solved));
+    if (d.solve_dates)  localStorage.setItem('dsa_solve_dates',   JSON.stringify(d.solve_dates));
     if (d.xp != null)   localStorage.setItem('dsa_xp',            d.xp);
     if (d.streak_count) localStorage.setItem('dsa_streak_count',  d.streak_count);
     if (d.streak_date)  localStorage.setItem('dsa_streak_date',   d.streak_date);
@@ -4685,6 +4725,7 @@ function markSolved() {
   if (hintOpened) xpGain = Math.max(0, xpGain - 3);
 
   addSolved(pid);
+  addSolveDate(pid);
   const newXP = addXP(xpGain);
   const newStreak = updateStreak();
   setBestTime(elapsed);
@@ -4811,18 +4852,59 @@ function fireConfetti() {
 
 // ─── STATS MODAL ─────────────────────────────────────────────────────────────
 function openStatsModal() {
-  const xp      = getXP();
-  const lv      = getLevel(xp);
-  const lvXP    = (lv - 1) * 100;
-  const solved  = getSolved();
-  const achs    = getAchs();
-  const streak  = getStreak();
-  const best    = getBestTime();
+  const xp     = getXP();
+  const lv     = getLevel(xp);
+  const lvXP   = (lv - 1) * 100;
+  const solved = getSolved();
+  const achs   = getAchs();
+  const streak = getStreak();
+  const best   = getBestTime();
+  const solveDates   = getSolveDates();
+  const totalProblems = PROBLEMS.length;
 
-  const totalE  = PROBLEMS.filter(p => p.difficulty === 'easy').length;
-  const totalM  = PROBLEMS.filter(p => p.difficulty === 'medium').length;
-  const doneE   = PROBLEMS.filter(p => p.difficulty === 'easy'   && solved.includes(p.id)).length;
-  const doneM   = PROBLEMS.filter(p => p.difficulty === 'medium' && solved.includes(p.id)).length;
+  const now      = new Date();
+  const todayKey = now.toISOString().slice(0, 10);
+  const dowToday = now.getDay(); // 0=Sun,6=Sat
+
+  // Schedule: Sat(6)=5, Sun(0)=5, weekdays=4
+  const dailyTarget = (dowToday === 0 || dowToday === 6) ? 5 : 4;
+  const solvedToday = (solveDates[todayKey] || []).length;
+  const todayLeft   = Math.max(0, dailyTarget - solvedToday);
+
+  // This week (Mon–Sun)
+  const WEEK_TARGETS = [5,4,4,4,4,4,5]; // Sun,Mon,Tue,Wed,Thu,Fri,Sat
+  const dayNames     = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  // Find Monday of current week
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((dowToday + 6) % 7));
+  let weekSolved = 0, weekTarget = 0;
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    const dow = d.getDay();
+    const target = WEEK_TARGETS[dow];
+    const done   = (solveDates[key] || []).length;
+    const isPast = d < now || key === todayKey;
+    weekTarget += target;
+    if (isPast) weekSolved += done;
+    weekDays.push({ name: dayNames[dow], target, done, key, isToday: key === todayKey, isPast });
+  }
+
+  // Finish line projection — schedule-based
+  // Remaining weeks: simulate week by week
+  const remaining = totalProblems - solved.length;
+  const perWeek   = 30; // 5+5+4*5
+  const weeksNeeded = Math.ceil(remaining / perWeek);
+  const finishDate  = new Date(now);
+  finishDate.setDate(now.getDate() + weeksNeeded * 7);
+  const finishStr   = finishDate.toLocaleDateString('default', { month:'short', day:'numeric', year:'numeric' });
+
+  // Today status
+  const todayStatus = solvedToday >= dailyTarget ? '✓ Daily goal hit!' :
+    todayLeft === 1 ? '1 more to hit today\'s goal' :
+    `${todayLeft} more to hit today's goal`;
+  const todayColor  = solvedToday >= dailyTarget ? '#3fb950' : '#d29922';
 
   // Pattern breakdown
   const patternMap = {};
@@ -4832,81 +4914,134 @@ function openStatsModal() {
     if (solved.includes(p.id)) patternMap[p.pattern].done++;
   });
 
+  const totalE = PROBLEMS.filter(p => p.difficulty === 'easy').length;
+  const totalM = PROBLEMS.filter(p => p.difficulty === 'medium').length;
+  const doneE  = PROBLEMS.filter(p => p.difficulty === 'easy'   && solved.includes(p.id)).length;
+  const doneM  = PROBLEMS.filter(p => p.difficulty === 'medium' && solved.includes(p.id)).length;
+
   const bestStr = best > 0
     ? `${String(Math.floor(best/60)).padStart(2,'0')}:${String(best%60).padStart(2,'0')}`
     : '--';
 
+  // ── Today's Quest ──
+  const todayPct = Math.min(100, (solvedToday / dailyTarget) * 100);
   let html = `
-    <div class="modal-section">
-      <h3>Progress</h3>
-      <div class="stat-row">
-        <span class="stat-label">Level</span>
-        <span class="stat-val" style="color:#58a6ff">Lv.${lv} ${getLevelName(lv)}</span>
+  <div class="modal-section">
+    <h3>Today's Quest</h3>
+    <div style="display:flex;align-items:center;gap:18px;margin-bottom:12px">
+      <div style="text-align:center">
+        <div style="font-size:36px;font-weight:800;color:${todayColor};line-height:1">${solvedToday}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">of ${dailyTarget} today</div>
       </div>
-      <div class="stat-row">
-        <span class="stat-label">Total XP</span>
-        <span class="stat-val">${xp} XP</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Level Progress</span>
-        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,(xp-lvXP))}%"></div></div>
-        <span class="stat-val" style="font-size:11px;width:60px;text-align:right">${xp-lvXP}/100</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Problems Solved</span>
-        <div class="progress-bar"><div class="progress-fill green" style="width:${(solved.length/40)*100}%"></div></div>
-        <span class="stat-val" style="font-size:11px;width:60px;text-align:right">${solved.length}/40</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Current Streak</span>
-        <span class="stat-val">\uD83D\uDD25 ${streak} day(s)</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Fastest Solve</span>
-        <span class="stat-val">\u26A1 ${bestStr}</span>
+      <div style="flex:1">
+        <div class="progress-bar" style="height:10px;border-radius:6px">
+          <div class="progress-fill green" style="width:${todayPct}%;background:${todayColor};border-radius:6px"></div>
+        </div>
+        <div style="font-size:12px;color:${todayColor};margin-top:6px;font-weight:600">${todayStatus}</div>
       </div>
     </div>
+  </div>
 
-    <div class="modal-section">
-      <h3>By Difficulty</h3>
-      <div class="stat-row">
-        <span class="stat-label" style="color:#3fb950">Easy</span>
-        <div class="progress-bar"><div class="progress-fill green" style="width:${totalE>0?(doneE/totalE)*100:0}%"></div></div>
-        <span class="stat-val" style="font-size:11px;width:60px;text-align:right">${doneE}/${totalE}</span>
+  <div class="modal-section">
+    <h3>This Week's Sprint &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">${weekSolved} / ${weekTarget} so far</span></h3>
+    <div style="display:flex;gap:6px;margin-top:4px">`;
+
+  weekDays.forEach(d => {
+    const pct  = Math.min(100, d.target > 0 ? (d.done / d.target) * 100 : 0);
+    const hit  = d.done >= d.target;
+    const col  = d.isToday ? '#58a6ff' : hit ? '#3fb950' : d.isPast ? '#d29922' : 'var(--border2)';
+    const textCol = d.isToday ? '#58a6ff' : 'var(--muted)';
+    html += `<div style="flex:1;text-align:center">
+      <div style="font-size:10px;color:${textCol};margin-bottom:4px;font-weight:${d.isToday?700:400}">${d.name}</div>
+      <div style="height:48px;background:var(--surface2);border-radius:4px;position:relative;overflow:hidden;border:1px solid ${d.isToday?'#58a6ff':'var(--border)'}">
+        <div style="position:absolute;bottom:0;width:100%;height:${pct}%;background:${col};opacity:0.8;transition:height 0.3s"></div>
       </div>
-      <div class="stat-row">
-        <span class="stat-label" style="color:#d29922">Medium</span>
-        <div class="progress-bar"><div class="progress-fill" style="background:linear-gradient(90deg,#7d4e00,#d29922);width:${totalM>0?(doneM/totalM)*100:0}%"></div></div>
-        <span class="stat-val" style="font-size:11px;width:60px;text-align:right">${doneM}/${totalM}</span>
+      <div style="font-size:10px;color:${col};margin-top:3px;font-weight:600">${d.isPast||d.isToday ? d.done : ''}${d.isPast||d.isToday ? `/${d.target}` : `/${d.target}`}</div>
+    </div>`;
+  });
+
+  html += `</div></div>
+
+  <div class="modal-section">
+    <h3>Finish Line</h3>
+    <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+      <div style="text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#58a6ff;line-height:1">${weeksNeeded}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">weeks to go</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#3fb950;line-height:1">${remaining}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">problems left</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--accent2);line-height:1">${finishStr}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">est. done date</div>
       </div>
     </div>
+    <div style="margin-top:14px">
+      <div class="progress-bar" style="height:8px;border-radius:6px">
+        <div class="progress-fill green" style="width:${Math.min(100,(solved.length/totalProblems)*100)}%;border-radius:6px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px">
+        <span>${solved.length} solved</span><span>${totalProblems} total</span>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted)">Based on 30 problems/week (5 Sat + 5 Sun + 4×5 weekdays)</div>
+  </div>
 
-    <div class="modal-section">
-      <h3>By Pattern</h3>
-      <div class="pattern-grid">
-  `;
+  <div class="modal-section">
+    <h3>Rank &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">${streak} day streak 🔥 &nbsp;⚡ ${bestStr} fastest</span></h3>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <div style="font-size:28px;font-weight:800;color:#58a6ff">Lv.${lv}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--accent2);font-weight:600;margin-bottom:5px">${getLevelName(lv)}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,xp-lvXP)}%"></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${xp-lvXP}/100 XP to next level</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1;background:var(--surface2);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:#3fb950;font-weight:700;margin-bottom:3px">EASY</div>
+        <div class="progress-bar" style="height:5px"><div class="progress-fill green" style="width:${totalE>0?(doneE/totalE)*100:0}%"></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${doneE}/${totalE}</div>
+      </div>
+      <div style="flex:1;background:var(--surface2);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:#d29922;font-weight:700;margin-bottom:3px">MEDIUM</div>
+        <div class="progress-bar" style="height:5px"><div class="progress-fill" style="background:linear-gradient(90deg,#7d4e00,#d29922);width:${totalM>0?(doneM/totalM)*100:0}%"></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${doneM}/${totalM}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-section">
+    <h3>Pattern Mastery</h3>
+    <div class="pattern-grid">`;
+
   Object.entries(patternMap).forEach(([pat, data]) => {
-    const pct = data.total > 0 ? (data.done / data.total) * 100 : 0;
-    html += `<div class="pattern-item">
-      <div class="pname">${pat}</div>
+    const pct  = data.total > 0 ? (data.done / data.total) * 100 : 0;
+    const done = data.done === data.total;
+    html += `<div class="pattern-item" style="${done ? 'border-color:#3fb950;background:rgba(63,185,80,0.05)' : ''}">
+      <div class="pname" style="${done ? 'color:#3fb950' : ''}">${done ? '✓ ' : ''}${pat}</div>
       <div class="pcount">${data.done}/${data.total}</div>
       <div class="progress-bar" style="margin-top:4px"><div class="progress-fill green" style="width:${pct}%"></div></div>
     </div>`;
   });
+
   html += `</div></div>
 
-    <div class="modal-section">
-      <h3>Achievements</h3>
-      <div class="ach-grid">
-  `;
+  <div class="modal-section">
+    <h3>Achievements</h3>
+    <div class="ach-grid">`;
+
   ACHIEVEMENTS.forEach(a => {
     const earned = achs.includes(a.id);
     html += `<div class="ach-item ${earned ? 'earned' : 'locked'}">
-      <div class="aicon">${earned ? a.icon : '\uD83D\uDD12'}</div>
+      <div class="aicon">${earned ? a.icon : '🔒'}</div>
       <div class="aname">${a.name}</div>
       <div class="adesc">${a.desc}</div>
     </div>`;
   });
+
   html += `</div></div>`;
 
   document.getElementById('stats-modal-content').innerHTML = html;
@@ -5388,9 +5523,385 @@ require(['vs/editor/editor.main'], function () {
   });
 
   loadFromFile().then(() => {
+    // Seed initial solve dates if not set yet
+    if (!localStorage.getItem('dsa_solve_dates') || localStorage.getItem('dsa_solve_dates') === '{}') {
+      const today = new Date().toISOString().slice(0, 10);
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const initDates = {
+        [yesterday]: [1, 217, 242, 49, 347],
+        [today]:     [238, 128, 125, 121]
+      };
+      localStorage.setItem('dsa_solve_dates', JSON.stringify(initDates));
+    }
+
     // Pre-seed guides. GUIDE_VERSIONS controls when to overwrite (bump version = force refresh).
-    const GUIDE_VERSIONS = { 347: 3 };
+    const GUIDE_VERSIONS = { 347: 3, 128: 1, 238: 1, 125: 1 };
     const SEEDED_GUIDES = {
+      128: `## 128. Longest Consecutive Sequence
+
+### What is the problem asking?
+
+Given an unsorted array, find the length of the longest sequence of consecutive integers.
+
+\`\`\`
+[100, 4, 200, 1, 3, 2]  →  4   (sequence: 1,2,3,4)
+[0,3,7,2,5,8,4,6,0,1]  →  9   (sequence: 0,1,2,3,4,5,6,7,8)
+\`\`\`
+
+No sorting allowed — must be O(n).
+
+---
+
+### Step 1 — Obvious approach: sort first
+
+Sort the array, then scan for consecutive runs.
+
+\`\`\`
+[1, 2, 3, 4, 100, 200]  →  longest run = 4
+\`\`\`
+
+Works, but O(n log n). The problem wants O(n).
+
+The issue: you sort just to answer "is the next number here?" A HashSet answers that in O(1).
+
+---
+
+### Step 2 — Put everything in a HashSet
+
+\`\`\`csharp
+var set = new HashSet<int>(nums);
+\`\`\`
+
+Now \`set.Contains(x)\` is O(1). We can check any number instantly without sorting.
+
+---
+
+### Step 3 — Naive: count from every element (still O(n²))
+
+For every number, count backwards to find sequence length:
+
+\`\`\`
+At 4: check 3✓ 2✓ 1✓ 0✗  →  length 4
+At 3: check 2✓ 1✓ 0✗      →  length 3
+At 2: check 1✓ 0✗          →  length 2
+At 1: check 0✗             →  length 1
+\`\`\`
+
+You retrace the sequence [1,2,3,4] four times. That redundancy makes it O(n²).
+
+---
+
+### Step 4 — The O(n) insight: only start from sequence starts
+
+A number is the START of a sequence only if \`num - 1\` is NOT in the set.
+
+\`\`\`
+set = {1, 2, 3, 4, 100, 200}
+
+1:   is 0 in set?   NO  → start → count forward: 1,2,3,4 → length 4
+2:   is 1 in set?   YES → skip
+3:   is 2 in set?   YES → skip
+4:   is 3 in set?   YES → skip
+100: is 99 in set?  NO  → start → count forward: just 100 → length 1
+200: is 199 in set? NO  → start → count forward: just 200 → length 1
+\`\`\`
+
+Only starts do the forward counting. Non-starts are skipped entirely.
+
+---
+
+### Why is it O(n) despite the while loop inside the for loop?
+
+This is the key question — it looks like O(n²) but it is not.
+
+Think about how many times each number gets touched:
+- Once in the outer loop (either skipped immediately, or identified as a start)
+- At most once inside a while loop (counted as part of exactly one sequence)
+
+Total touches = at most 2n across the entire run = O(n).
+
+\`\`\`
+[1, 2, 3, 4, 100, 200]
+
+outer loop: touches 1,2,3,4,100,200         = 6 touches
+while loop: from start=1, touches 2,3,4     = 3 touches
+            100 and 200 → while runs 0 times = 0 touches
+total = 9 = O(n)
+\`\`\`
+
+Compare the O(n²) version without the start check:
+\`\`\`
+At 4: while touches 3,2,1  = 3
+At 3: while touches 2,1    = 2
+At 2: while touches 1      = 1
+At 1: while touches 0      = 0
+total while touches = 6 for just 4 elements → grows as n²
+\`\`\`
+
+The single line \`if (set.Contains(num - 1)) continue\` collapses it from O(n²) to O(n).
+
+---
+
+### Full solution
+
+\`\`\`csharp
+public int LongestConsecutive(int[] nums) {
+    if (nums.Length == 0) return 0;
+
+    var set = new HashSet<int>(nums);
+    int maxLen = 1;
+
+    foreach (int num in set) {               // iterate set to skip duplicates
+        if (set.Contains(num - 1)) continue; // not a start, skip
+
+        int len = 1;
+        while (set.Contains(num + len))
+            len++;
+
+        maxLen = Math.Max(maxLen, len);
+    }
+
+    return maxLen;
+}
+\`\`\`
+
+---
+
+### Complexity
+
+- **Time:** O(n) — each element touched at most twice
+- **Space:** O(n) — HashSet`,
+      238: `## 238. Product of Array Except Self
+
+### What is the problem actually asking?
+
+Given [1, 2, 3, 4], return an array where each position holds the product of every number EXCEPT the one at that position.
+
+\`\`\`
+nums:   [1,  2,  3,  4]
+result: [24, 12, 8,  6]
+
+result[0] = 2×3×4 = 24
+result[1] = 1×3×4 = 12
+result[2] = 1×2×4 = 8
+result[3] = 1×2×3 = 6
+\`\`\`
+
+---
+
+### Why not just divide?
+
+Your first instinct: totalProduct / nums[i].
+
+Breaks on zero. If nums[i] = 0, you get 0 ÷ 0 = undefined.
+You'd need ugly special cases. The two-pass approach just works with no edge cases.
+
+---
+
+### The core insight
+
+For any index i, the answer is:
+
+**everything to the LEFT of i** × **everything to the RIGHT of i**
+
+We compute each half separately in two passes.
+
+---
+
+### Left pass — walk left to right
+
+At each index, store the running product of everything BEFORE it.
+
+\`\`\`
+nums:  [1,  2,  3,  4]
+
+At i=0: nothing to the left → 1 (empty product)
+At i=1: just nums[0] = 1
+At i=2: nums[0]×nums[1] = 1×2 = 2
+At i=3: nums[0]×nums[1]×nums[2] = 1×2×3 = 6
+
+left:  [1,  1,  2,  6]
+\`\`\`
+
+Pattern: each cell = previous cell × previous nums element.
+
+\`\`\`csharp
+int[] result = new int[nums.Length];
+result[0] = 1;
+for (int i = 1; i < nums.Length; i++)
+    result[i] = result[i-1] * nums[i-1];
+// result = [1, 1, 2, 6]
+\`\`\`
+
+---
+
+### Right pass — walk right to left
+
+Now multiply in the running product of everything to the RIGHT.
+No second array needed — just a single variable \`right\` that starts at 1.
+
+\`\`\`
+result so far: [1,  1,  2,  6]   (left products)
+right = 1
+
+i=3: result[3] = 6 × 1 = 6,    right = 1×4 = 4
+i=2: result[2] = 2 × 4 = 8,    right = 4×3 = 12
+i=1: result[1] = 1 × 12 = 12,  right = 12×2 = 24
+i=0: result[0] = 1 × 24 = 24
+\`\`\`
+
+Final result: [24, 12, 8, 6] ✓
+
+\`\`\`csharp
+int right = 1;
+for (int i = nums.Length - 1; i >= 0; i--) {
+    result[i] *= right;
+    right *= nums[i];
+}
+\`\`\`
+
+---
+
+### Full solution
+
+\`\`\`csharp
+public int[] ProductExceptSelf(int[] nums) {
+    int[] result = new int[nums.Length];
+
+    // Left pass
+    result[0] = 1;
+    for (int i = 1; i < nums.Length; i++)
+        result[i] = result[i-1] * nums[i-1];
+
+    // Right pass
+    int right = 1;
+    for (int i = nums.Length - 1; i >= 0; i--) {
+        result[i] *= right;
+        right *= nums[i];
+    }
+
+    return result;
+}
+\`\`\`
+
+---
+
+### Complexity
+
+- **Time:** O(n) — two passes
+- **Space:** O(1) extra (output array excluded)`,
+      125: `## 125. Valid Palindrome
+
+### What is the problem asking?
+
+A palindrome reads the same forwards and backwards.
+But here you must ignore non-alphanumeric characters and case.
+
+\`\`\`
+"A man, a plan, a canal: Panama"
+→ strip non-alphanumeric, lowercase: "amanaplanacanalpanama"
+→ palindrome? YES
+\`\`\`
+
+---
+
+### Step 1 — Basic palindrome (no special chars)
+
+Two pointers: \`i\` at the start, \`j\` at the end. Move inward, compare.
+
+\`\`\`
+"racecar"
+i=0 j=6: r == r ✓
+i=1 j=5: a == a ✓
+i=2 j=4: c == c ✓
+i=3 j=3: pointers met → done → true
+\`\`\`
+
+\`\`\`csharp
+while (i < j) {
+    if (char.ToLower(s[i]) != char.ToLower(s[j])) return false;
+    i++; j--;
+}
+return true;
+\`\`\`
+
+This works for clean strings. Fails on "A man, a plan..." because commas and spaces break the comparison.
+
+---
+
+### Step 2 — Skipping non-alphanumeric chars
+
+When you hit a non-alphanumeric character, skip it — move that pointer inward until you land on a letter or digit.
+
+First instinct: use \`if\` to skip one char at a time.
+
+The problem: \`if\` only skips ONE character. What about \`"a,,,b"\`?
+You'd skip the first comma, then compare \`','\` vs \`'b'\` — still wrong.
+
+You need \`while\` — keep skipping until you land on alphanumeric.
+
+\`\`\`csharp
+while (i < j && !char.IsLetterOrDigit(s[i])) i++;
+while (i < j && !char.IsLetterOrDigit(s[j])) j--;
+\`\`\`
+
+---
+
+### Step 3 — The guard condition matters: i < j not i < len
+
+First instinct: guard with \`i < len\` and \`j >= 0\`.
+
+The problem: if the string is all non-alphanumeric (e.g. \`" "\`), skipping runs \`i\` past \`j\`. Then you access \`s[i]\` or \`s[j]\` with crossed/invalid indices → crash or wrong answer.
+
+Using \`i < j\` as the guard in the inner whiles prevents this:
+- Once pointers meet or cross, skipping stops
+- The outer \`while (i < j)\` won't enter the compare either
+
+\`\`\`csharp
+while (i < j && !char.IsLetterOrDigit(s[i])) i++;  // not i < len
+while (i < j && !char.IsLetterOrDigit(s[j])) j--;  // not j >= 0
+\`\`\`
+
+---
+
+### Step 4 — Also: check bounds BEFORE array access
+
+\`while (!char.IsLetterOrDigit(s[i]) && i < len)\` — WRONG order.
+
+C# evaluates left to right. If \`i == len\`, it accesses \`s[len]\` before checking the bound → IndexOutOfRangeException.
+
+Always put the bounds check first:
+
+\`\`\`csharp
+while (i < j && !char.IsLetterOrDigit(s[i])) // bound check first
+\`\`\`
+
+---
+
+### Full solution
+
+\`\`\`csharp
+public bool IsPalindrome(string s) {
+    int i = 0, j = s.Length - 1;
+
+    while (i < j) {
+        while (i < j && !char.IsLetterOrDigit(s[i])) i++;
+        while (i < j && !char.IsLetterOrDigit(s[j])) j--;
+
+        if (char.ToLower(s[i]) != char.ToLower(s[j])) return false;
+        i++; j--;
+    }
+
+    return true;
+}
+\`\`\`
+
+---
+
+### Complexity
+
+- **Time:** O(n) — each character visited at most once
+- **Space:** O(1) — no extra data structures`,
       347: `## 347. Top K Frequent Elements
 
 ### Start here: what is the problem actually asking?
