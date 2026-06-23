@@ -929,7 +929,7 @@ class Program {
   },
   {
     id: 424, title: "Longest Repeating Character Replacement", difficulty: "medium", pattern: "Sliding Window",
-    description: `You are given a string <code>s</code> and an integer <code>k</code>. You can choose any character of the string and change it to any other uppercase English character. You can perform this operation at most <code>k</code> times.<br><br>Return the length of the longest substring containing the same letter you can get after performing the above operations.`,
+    description: `You are given a string <code>s</code> and an integer <code>k</code>.<br><br><b>Goal:</b> Find the longest contiguous stretch of <b>identical characters</b> you can create in the string.<br><br><b>Your cheat:</b> You may change <b>at most <code>k</code> characters</b> anywhere in the string to any letter you want.<br><br>After using up to <code>k</code> changes as cleverly as possible, what is the <b>length of the longest all-same substring</b> you can get?<br><br><i>Example:</i> <code>"AABABBA"</code>, k=1 → change the B in <code>"AABA"</code> to A → <code>"AAAA"</code> → answer is <b>4</b>.`,
     examples: [
       { input: 's = "ABAB", k = 2', output: "4" },
       { input: 's = "AABABBA", k = 1', output: "4" }
@@ -5535,7 +5535,7 @@ require(['vs/editor/editor.main'], function () {
     }
 
     // Pre-seed guides. GUIDE_VERSIONS controls when to overwrite (bump version = force refresh).
-    const GUIDE_VERSIONS = { 347: 3, 128: 1, 238: 1, 125: 1 };
+    const GUIDE_VERSIONS = { 347: 3, 128: 1, 238: 1, 125: 1, 11: 1, 3: 1 };
     const SEEDED_GUIDES = {
       128: `## 128. Longest Consecutive Sequence
 
@@ -6061,6 +6061,263 @@ public int[] TopKFrequent(int[] nums, int k) {
 
 The freq map is not the clever part — it just replaces brute force scanning.
 The clever part is realising counts are bounded by n, making bucket sort legal.`,
+      3: `## 3. Longest Substring Without Repeating Characters
+
+### What is the problem actually asking?
+
+Find the longest stretch of characters in a string where no character repeats. Spaces and special characters count as valid characters too.
+
+\`\`\`
+"abcabcbb" → 3  (window "abc")
+"pwwkew"   → 3  (window "wke")
+"bbbbb"    → 1  (window "b")
+" "        → 1  (space is a valid unique character)
+\`\`\`
+
+---
+
+### First instinct: reset when you hit a repeat
+
+When you find a character already seen, reset and start fresh from the current character.
+
+\`\`\`
+"abcabcbb"
+hit 'a' at index 3 → reset, start from index 3 → "a"
+\`\`\`
+
+The problem: you miss longer windows. The best window starting after index 0 is "bca" (starting at index 1), not "a" (starting at index 3). Resetting throws away valid progress.
+
+---
+
+### Better: sliding window
+
+Think of a **frame** sliding over the string. The frame can grow or shrink but never goes backward.
+
+**Rule:** the frame must always contain unique characters only.
+
+\`\`\`
+s = "a b c a b c b b"
+     0 1 2 3 4 5 6 7
+\`\`\`
+
+Start with an empty frame at position 0. l = left edge, r = right edge.
+
+\`\`\`
+[a]b c a b c b b     add 'a' → unique → grow    max=1
+[a b]c a b c b b     add 'b' → unique → grow    max=2
+[a b c]a b c b b     add 'c' → unique → grow    max=3
+[a b c]a             try 'a' → REPEAT → can't grow
+\`\`\`
+
+---
+
+### When you hit a repeat: shrink from the left
+
+Move the LEFT boundary right (remove s[l] from set, l++) until the duplicate is gone. Don't move r — don't reset.
+
+\`\`\`
+frame = [a b c]   l=0, r=3
+s[r] = 'a' → already in set
+
+remove s[0]='a', l=1
+frame = [b c]   → 'a' no longer in set → safe
+
+add 'a' → frame = [b c a]   max=3
+\`\`\`
+
+Another example where you shrink more than once:
+
+\`\`\`
+frame = [a b c d]   l=0, r=4
+s[r] = 'b' → REPEAT
+
+remove s[0]='a', l=1  → set={b,c,d} → 'b' still there
+remove s[1]='b', l=2  → set={c,d}   → 'b' gone
+
+add 'b' → frame = [c d b]   max=4
+\`\`\`
+
+The shrink is a while loop — keep going until the duplicate is gone:
+
+\`\`\`csharp
+while (set.Contains(s[r])) {
+    set.Remove(s[l]);
+    l++;
+}
+\`\`\`
+
+---
+
+### Full solution
+
+\`\`\`csharp
+public int LengthOfLongestSubstring(string s) {
+    var set = new HashSet<char>();
+    int l = 0, maxLen = 0;
+
+    for (int r = 0; r < s.Length; r++) {
+        while (set.Contains(s[r])) {
+            set.Remove(s[l]);
+            l++;
+        }
+        set.Add(s[r]);
+        maxLen = Math.Max(maxLen, r - l + 1);
+    }
+
+    return maxLen;
+}
+\`\`\`
+
+---
+
+### Complexity
+
+- **Time:** O(n) — each character is added and removed from the set at most once
+- **Space:** O(min(n, m)) — set size bounded by unique characters in the alphabet`,
+      11: `## 11. Container With Most Water
+
+### What is the problem actually asking?
+
+You have a bunch of vertical walls standing on a number line. Pick any two walls — the water you can hold between them is limited by the shorter wall (water spills over the shorter one).
+
+\`\`\`
+height = [1, 8, 6, 2, 5, 4, 8, 3, 7]
+index:    0  1  2  3  4  5  6  7  8
+
+8 |  X           X
+7 |  X           X        X
+6 |  X  X        X        X
+5 |  X  X     X  X        X
+4 |  X  X     X  X  X     X
+3 |  X  X     X  X  X  X  X
+2 |  X  X  X  X  X  X  X  X
+1 |X  X  X  X  X  X  X  X  X
+  +---------------------------
+   0  1  2  3  4  5  6  7  8
+\`\`\`
+
+You want to find the pair of walls that holds the **most water**.
+
+The formula for any pair (l, r):
+
+\`\`\`
+water = (r - l) × min(height[l], height[r])
+\`\`\`
+
+You want to **maximize** that product across all pairs.
+
+---
+
+### Brute force: check every pair
+
+Two nested loops, try all combinations.
+
+\`\`\`
+pick wall 0 and wall 1: (1-0) × min(1,8) = 1
+pick wall 0 and wall 2: (2-0) × min(1,6) = 2
+...
+pick wall 1 and wall 8: (8-1) × min(8,7) = 49
+...
+\`\`\`
+
+O(n²) — too slow.
+
+---
+
+### Two pointer intuition: why we don't need to check every pair
+
+Start with pointers at both ends — this gives the maximum possible width:
+
+\`\`\`
+[1, 8, 6, 2, 5, 4, 8, 3, 7]
+ L                          R
+\`\`\`
+
+Now ask: **which pointer should we move inward?**
+
+**If we move the taller wall inward:**
+- Width shrinks
+- Height is STILL limited by the shorter wall (it didn't change)
+- We can only lose or stay the same — pointless
+
+**If we move the shorter wall inward:**
+- Width shrinks
+- BUT we might find a taller wall — the height could increase
+- Only hope of beating our current best
+
+**Rule: always move the shorter wall inward. If equal, move either (convention: move left).**
+
+---
+
+### Walk through the example
+
+\`\`\`
+height = [1, 8, 6, 2, 5, 4, 8, 3, 7]
+
+L=0 (h=1), R=8 (h=7) → water = 8 × min(1,7) = 8    → move L (shorter)
+L=1 (h=8), R=8 (h=7) → water = 7 × min(8,7) = 49   → move R (shorter)
+L=1 (h=8), R=7 (h=3) → water = 6 × min(8,3) = 18   → move R
+L=1 (h=8), R=6 (h=8) → water = 5 × min(8,8) = 40   → move L (equal)
+... until L meets R
+
+Max seen = 49 ✓
+\`\`\`
+
+---
+
+### Building the code step by step
+
+**Setup:** two pointers at ends, track max.
+
+\`\`\`csharp
+int l = 0;
+int r = height.Length - 1;  // NOT .Length — that's out of bounds
+int maxVol = int.MinValue;
+\`\`\`
+
+**Loop:** calculate water each step, then move the shorter pointer.
+
+\`\`\`csharp
+while (l < r) {
+    maxVol = Math.Max(Math.Min(height[l], height[r]) * (r - l), maxVol);
+    // (r - l) not (l - r) — l is always less than r so (l-r) is negative
+
+    if (height[l] >= height[r])
+        r--;        // move shorter (or equal) inward
+    else
+        l++;
+}
+\`\`\`
+
+---
+
+### Full solution
+
+\`\`\`csharp
+public int MaxArea(int[] height) {
+    int l = 0;
+    int r = height.Length - 1;
+    int maxVol = int.MinValue;
+
+    while (l < r) {
+        maxVol = Math.Max(Math.Min(height[l], height[r]) * (r - l), maxVol);
+
+        if (height[l] >= height[r])
+            r--;
+        else
+            l++;
+    }
+
+    return maxVol;
+}
+\`\`\`
+
+---
+
+### Complexity
+
+- **Time:** O(n) — each pointer moves inward at most n times total
+- **Space:** O(1) — just two pointers and a max variable`,
     };
     for (const [pid, text] of Object.entries(SEEDED_GUIDES)) {
       const vkey = `dsa_guide_v_${pid}`;
