@@ -48,16 +48,35 @@ function ensureProject() {
   console.log('Ready.');
 }
 
+let currentRun = null;
+
+function killTree(pid) {
+  try { execSync(`taskkill /F /T /PID ${pid}`, { windowsHide: true }); } catch {}
+}
+
 function executeCode(code) {
+  // Kill any previous run still holding file locks
+  if (currentRun) { killTree(currentRun.pid); currentRun = null; }
+
   return new Promise((resolve) => {
     fs.writeFileSync(path.join(PROJECT_DIR, 'Program.cs'), code, 'utf8');
-    exec('dotnet run --no-restore', {
+
+    // Use exec (goes through cmd.exe) so dotnet is always found in PATH on Windows
+    const proc = exec('dotnet run --no-restore', {
       cwd: PROJECT_DIR,
-      timeout: 15000,
       windowsHide: true,
     }, (err, stdout, stderr) => {
+      clearTimeout(timer);
+      currentRun = null;
       resolve({ stdout: stdout || '', stderr: stderr || '', exitCode: err ? (err.code || 1) : 0 });
     });
+    currentRun = proc;
+
+    const timer = setTimeout(() => {
+      killTree(proc.pid);
+      currentRun = null;
+      resolve({ stdout: '', stderr: '[Timeout: execution exceeded 15s]', exitCode: 1 });
+    }, 15000);
   });
 }
 
@@ -70,6 +89,18 @@ function loadProgress() {
 }
 
 function saveProgress(data) {
+  // Merge guides: keep any guide in the file that the client doesn't have yet
+  try {
+    const existing = JSON.parse(fs.readFileSync(PROGRESS_FILE, 'utf8'));
+    if (existing.guides) {
+      data.guides = data.guides || {};
+      for (const [k, v] of Object.entries(existing.guides)) {
+        if (v && (!data.guides[k] || data.guides[k] === '')) {
+          data.guides[k] = v;
+        }
+      }
+    }
+  } catch {}
   fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
@@ -134,6 +165,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
+try { execSync('taskkill /F /IM dotnet.exe /T', { windowsHide: true }); } catch {}
 try { ensureProject(); } catch (e) { console.error('dotnet not found:', e.message); }
 
 server.listen(PORT, () => {
