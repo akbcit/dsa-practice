@@ -912,55 +912,190 @@ Same idea as \`ListNode\` — but instead of one \`.next\`, you have \`.left\` a
 
 With a linked list you just follow \`.next\`. With a tree you have to choose — left first or right first?
 
-There are three standard orders:
+There are three standard orders. We'll use this tree for all three:
 
 <div class="viz">
-<svg width="380" height="130" xmlns="http://www.w3.org/2000/svg">
-  <!-- same tree -->
-  <line x1="190" y1="28" x2="110" y2="72" stroke="#2e2e38" stroke-width="1.5"/>
-  <line x1="190" y1="28" x2="270" y2="72" stroke="#2e2e38" stroke-width="1.5"/>
-  <line x1="110" y1="88" x2="70"  y2="116" stroke="#2e2e38" stroke-width="1.5"/>
-  <line x1="110" y1="88" x2="150" y2="116" stroke="#2e2e38" stroke-width="1.5"/>
-  <circle cx="190" cy="22" r="18" fill="#18181f" stroke="#8b5cf6" stroke-width="2"/>
-  <text x="190" y="27" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono,monospace" font-size="13">4</text>
-  <circle cx="110" cy="80" r="18" fill="#18181f" stroke="#06b6d4" stroke-width="1.5"/>
-  <text x="110" y="85" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="13">2</text>
-  <circle cx="270" cy="80" r="18" fill="#18181f" stroke="#06b6d4" stroke-width="1.5"/>
-  <text x="270" y="85" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="13">7</text>
-  <circle cx="70"  cy="116" r="15" fill="#18181f" stroke="#22c55e" stroke-width="1.5"/>
-  <text x="70"  y="121" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="12">1</text>
-  <circle cx="150" cy="116" r="15" fill="#18181f" stroke="#22c55e" stroke-width="1.5"/>
-  <text x="150" y="121" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="12">3</text>
-  <!-- order labels -->
-  <text x="310" y="30"  fill="#f0f0f5" font-family="Inter,sans-serif" font-size="12" font-weight="600">Orders:</text>
-  <text x="310" y="52"  fill="#a78bfa" font-family="Inter,sans-serif" font-size="11">Inorder:</text>
-  <text x="310" y="65"  fill="#71717a" font-family="Inter,sans-serif" font-size="11">1,2,3,4,7</text>
-  <text x="310" y="82"  fill="#06b6d4" font-family="Inter,sans-serif" font-size="11">Preorder:</text>
-  <text x="310" y="95"  fill="#71717a" font-family="Inter,sans-serif" font-size="11">4,2,1,3,7</text>
-  <text x="310" y="112" fill="#22c55e" font-family="Inter,sans-serif" font-size="11">Postorder:</text>
-  <text x="310" y="125" fill="#71717a" font-family="Inter,sans-serif" font-size="11">1,3,2,7,4</text>
+<svg width="420" height="160" xmlns="http://www.w3.org/2000/svg">
+  <!-- edges -->
+  <line x1="210" y1="36" x2="120" y2="86" stroke="#2e2e38" stroke-width="1.5"/>
+  <line x1="210" y1="36" x2="300" y2="86" stroke="#2e2e38" stroke-width="1.5"/>
+  <line x1="120" y1="102" x2="65"  y2="140" stroke="#2e2e38" stroke-width="1.5"/>
+  <line x1="120" y1="102" x2="175" y2="140" stroke="#2e2e38" stroke-width="1.5"/>
+  <line x1="300" y1="102" x2="245" y2="140" stroke="#2e2e38" stroke-width="1.5"/>
+  <line x1="300" y1="102" x2="355" y2="140" stroke="#2e2e38" stroke-width="1.5"/>
+  <!-- nodes -->
+  <circle cx="210" cy="28"  r="22" fill="#18181f" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="210" y="34"  text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono,monospace" font-size="14" font-weight="600">4</text>
+  <circle cx="120" cy="94"  r="22" fill="#18181f" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="120" y="100" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="14">2</text>
+  <circle cx="300" cy="94"  r="22" fill="#18181f" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="300" y="100" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="14">6</text>
+  <circle cx="65"  cy="148" r="18" fill="#18181f" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="65"  y="154" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="13">1</text>
+  <circle cx="175" cy="148" r="18" fill="#18181f" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="175" y="154" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="13">3</text>
+  <circle cx="245" cy="148" r="18" fill="#18181f" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="245" y="154" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="13">5</text>
+  <circle cx="355" cy="148" r="18" fill="#18181f" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="355" y="154" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="13">7</text>
+  <!-- labels -->
+  <text x="210" y="10" text-anchor="middle" fill="#a78bfa" font-family="Inter,sans-serif" font-size="10">root</text>
 </svg>
-<p class="viz-caption">Same tree, three different visit orders.</p>
+<p class="viz-caption">This is a BST — left children are smaller, right children are larger.</p>
 </div>
 
-**Inorder** (left → node → right): visits nodes in sorted order for a BST
+---
 
-**Preorder** (node → left → right): visits root first — useful for copying a tree
+### Inorder — left → node → right
 
-**Postorder** (left → right → node): visits children before parent — useful for deleting
+**Rule:** go as far left as possible first. Visit. Then go right.
 
-All three are done with **recursion**:
+**Result: 1 → 2 → 3 → 4 → 5 → 6 → 7** (sorted order!)
+
+Mental model — project all nodes straight down onto a number line:
+
+<div class="viz">
+<svg width="420" height="110" xmlns="http://www.w3.org/2000/svg">
+  <!-- tree faint -->
+  <line x1="210" y1="22" x2="120" y2="52" stroke="#2e2e38" stroke-width="1" opacity="0.4"/>
+  <line x1="210" y1="22" x2="300" y2="52" stroke="#2e2e38" stroke-width="1" opacity="0.4"/>
+  <line x1="120" y1="62" x2="65"  y2="85" stroke="#2e2e38" stroke-width="1" opacity="0.4"/>
+  <line x1="120" y1="62" x2="175" y2="85" stroke="#2e2e38" stroke-width="1" opacity="0.4"/>
+  <line x1="300" y1="62" x2="245" y2="85" stroke="#2e2e38" stroke-width="1" opacity="0.4"/>
+  <line x1="300" y1="62" x2="355" y2="85" stroke="#2e2e38" stroke-width="1" opacity="0.4"/>
+  <circle cx="210" cy="18"  r="14" fill="#18181f" stroke="#8b5cf6" stroke-width="1.5" opacity="0.6"/>
+  <text x="210" y="23"  text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono,monospace" font-size="11" opacity="0.6">4</text>
+  <circle cx="120" cy="60"  r="14" fill="#18181f" stroke="#06b6d4" stroke-width="1.5" opacity="0.6"/>
+  <text x="120" y="65" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="11" opacity="0.6">2</text>
+  <circle cx="300" cy="60"  r="14" fill="#18181f" stroke="#06b6d4" stroke-width="1.5" opacity="0.6"/>
+  <text x="300" y="65" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="11" opacity="0.6">6</text>
+  <circle cx="65"  cy="90" r="12" fill="#18181f" stroke="#22c55e" stroke-width="1.5" opacity="0.6"/>
+  <text x="65"  y="95" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="10" opacity="0.6">1</text>
+  <circle cx="175" cy="90" r="12" fill="#18181f" stroke="#22c55e" stroke-width="1.5" opacity="0.6"/>
+  <text x="175" y="95" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="10" opacity="0.6">3</text>
+  <circle cx="245" cy="90" r="12" fill="#18181f" stroke="#22c55e" stroke-width="1.5" opacity="0.6"/>
+  <text x="245" y="95" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="10" opacity="0.6">5</text>
+  <circle cx="355" cy="90" r="12" fill="#18181f" stroke="#22c55e" stroke-width="1.5" opacity="0.6"/>
+  <text x="355" y="95" text-anchor="middle" fill="#f0f0f5" font-family="JetBrains Mono,monospace" font-size="10" opacity="0.6">7</text>
+  <!-- number line -->
+  <line x1="40" y1="108" x2="390" y2="108" stroke="#2e2e38" stroke-width="1.5"/>
+  <text x="65"  y="108" text-anchor="middle" fill="#eab308" font-family="JetBrains Mono,monospace" font-size="11">1</text>
+  <text x="120" y="108" text-anchor="middle" fill="#eab308" font-family="JetBrains Mono,monospace" font-size="11">2</text>
+  <text x="175" y="108" text-anchor="middle" fill="#eab308" font-family="JetBrains Mono,monospace" font-size="11">3</text>
+  <text x="210" y="108" text-anchor="middle" fill="#eab308" font-family="JetBrains Mono,monospace" font-size="11">4</text>
+  <text x="245" y="108" text-anchor="middle" fill="#eab308" font-family="JetBrains Mono,monospace" font-size="11">5</text>
+  <text x="300" y="108" text-anchor="middle" fill="#eab308" font-family="JetBrains Mono,monospace" font-size="11">6</text>
+  <text x="355" y="108" text-anchor="middle" fill="#eab308" font-family="JetBrains Mono,monospace" font-size="11">7</text>
+</svg>
+<p class="viz-caption">Drop every node straight down — inorder reads left to right, in sorted order.</p>
+</div>
+
+Step-by-step walk (inorder on root=4):
+
+\`\`\`
+Inorder(4)
+  → Inorder(2)           go left of 4 first
+      → Inorder(1)       go left of 2
+          → Inorder(null)  hit null, return
+          print 1        ← leftmost node, visited first
+          → Inorder(null)  right of 1 = null, return
+      print 2
+      → Inorder(3)
+          → Inorder(null)
+          print 3
+          → Inorder(null)
+  print 4                ← root visited AFTER entire left side
+  → Inorder(6)           now go right of 4
+      → Inorder(5)
+          print 5
+      print 6
+      → Inorder(7)
+          print 7
+
+Output: 1 2 3 4 5 6 7
+\`\`\`
 
 \`\`\`csharp
 void Inorder(TreeNode node) {
-    if (node == null) return;   // base case — stop
-    Inorder(node.left);         // go left
-    Console.Write(node.val);    // visit
-    Inorder(node.right);        // go right
+    if (node == null) return;   // hit a leaf's child — turn back
+    Inorder(node.left);         // recurse left first
+    Console.Write(node.val);    // then visit this node
+    Inorder(node.right);        // then recurse right
 }
 \`\`\`
 
-The base case \`if (node == null) return\` is what stops the recursion. Every leaf's children are null — when you hit null, you turn back.
+---
+
+### Preorder — node → left → right
+
+**Rule:** visit the node FIRST, then recurse.
+
+**Result: 4 → 2 → 1 → 3 → 6 → 5 → 7**
+
+You're tracing the tree **top-down, left-biased** — root always comes out first.
+
+Step-by-step:
+
+\`\`\`
+Preorder(4)
+  print 4                ← root visited FIRST
+  → Preorder(2)
+      print 2
+      → Preorder(1)
+          print 1
+      → Preorder(3)
+          print 3
+  → Preorder(6)
+      print 6
+      → Preorder(5)
+          print 5
+      → Preorder(7)
+          print 7
+
+Output: 4 2 1 3 6 5 7
+\`\`\`
+
+\`\`\`csharp
+void Preorder(TreeNode node) {
+    if (node == null) return;
+    Console.Write(node.val);    // visit BEFORE going deeper
+    Preorder(node.left);
+    Preorder(node.right);
+}
+\`\`\`
+
+---
+
+### Postorder — left → right → node
+
+**Rule:** visit the node LAST — only after both children are done.
+
+**Result: 1 → 3 → 2 → 5 → 7 → 6 → 4**
+
+Root (4) always comes out last.
+
+\`\`\`csharp
+void Postorder(TreeNode node) {
+    if (node == null) return;
+    Postorder(node.left);
+    Postorder(node.right);
+    Console.Write(node.val);    // visit AFTER both children
+}
+\`\`\`
+
+---
+
+### Easy way to remember all three
+
+The **pre/in/post** prefix tells you **when the root is visited** relative to its children:
+
+| Name | Root visited | Result on our tree |
+|---|---|---|
+| **Pre**order | **before** children | 4 2 1 3 6 5 7 |
+| **In**order | **between** children | 1 2 3 4 5 6 7 |
+| **Post**order | **after** children | 1 3 2 5 7 6 4 |
+
+The base case \`if (node == null) return\` is the same in all three — every leaf's children are null, and hitting null is what stops the recursion.
 
 ---
 
