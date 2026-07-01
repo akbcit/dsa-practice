@@ -524,6 +524,7 @@
   <button class="topbar-btn" id="btn-next" onclick="goNextUnsolved()" title="Jump to next unsolved problem">Next Unsolved &rarr;</button>
   <button class="topbar-btn" id="btn-review" onclick="goNextShaky()" title="Jump to next low-confidence problem">😕 Review</button>
   <button id="btn-run" onclick="runCode()">&#9654; Run Code</button>
+  <button class="topbar-btn" onclick="formatCode()" title="Fix indentation">&#8644; Format</button>
   <button class="topbar-btn" onclick="copyCode()">Copy for Review</button>
   <button class="topbar-btn" onclick="resetCode()" title="Restore starter code">&#8635; Reset</button>
   <button class="topbar-btn" onclick="openStatsModal()">&#128202; Stats</button>
@@ -5414,6 +5415,37 @@ require(['vs/editor/editor.main'], function () {
     smoothScrolling: true,
     cursorBlinking: 'smooth',
     cursorSmoothCaretAnimation: 'on',
+  });
+
+  // ─── FORMAT CODE BUTTON ───────────────────────────────────────────────────
+  window.formatCode = function() {
+    const code = editor.getValue();
+    const lines = code.split('\n');
+    let indent = 0;
+    const formatted = lines.map(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return '';
+      // decrease indent for closing braces before printing
+      if (trimmed.startsWith('}')) indent = Math.max(0, indent - 1);
+      const result = '    '.repeat(indent) + trimmed;
+      // increase indent after opening braces
+      const opens = (trimmed.match(/\{/g) || []).length;
+      const closes = (trimmed.match(/\}/g) || []).length;
+      indent = Math.max(0, indent + opens - closes);
+      return result;
+    });
+    editor.setValue(formatted.join('\n'));
+  };
+
+  // ─── FORMAT CODE CONTEXT MENU ITEM ───────────────────────────────────────
+  editor.addAction({
+    id: 'format-code',
+    label: 'Format Code',
+    contextMenuGroupId: '1_modification',
+    contextMenuOrder: 1,
+    run: function(ed) {
+      ed.getAction('editor.action.formatDocument').run();
+    }
   });
 
   // ─── SMART LOOP INSERTION ─────────────────────────────────────────────────

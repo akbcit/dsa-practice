@@ -1151,6 +1151,566 @@ Same idea as binary search on an array — but on a tree.
 | Each node has | 1 pointer (next) | 2 pointers (left, right) | 2 pointers + ordering rule |
 | Traversal | Follow .next | Recurse left + right | Same, but ordered |
 | Search | O(n) | O(n) | O(log n) |`
+  },
+  {
+    id: "graphs",
+    name: "Graphs & Grid DFS",
+    icon: "🕸️",
+    category: "Data Structures",
+    tag: "ds",
+    content: `## Graphs & Grid DFS
+
+### What is a graph?
+
+A graph is just **nodes connected by edges**. That's it. No rules about direction, no single root, no parent-child restriction.
+
+\`\`\`
+Tree (restricted graph):        Graph (no rules):
+        1                        1 ── 2
+       / \\                       |  \\ |
+      2   3                      3 ── 4
+\`\`\`
+
+A tree IS a graph — just a special one with no cycles and one root. A graph is more general.
+
+---
+
+### Three ways the same idea appears in problems
+
+| Form | What nodes are | What edges are |
+|---|---|---|
+| Explicit graph | numbered nodes | given connections |
+| Grid | cells \`[row][col]\` | adjacent cells (up/down/left/right) |
+| Implicit | states in a problem | valid transitions |
+
+Number of Islands uses a **grid graph** — the most common form in LeetCode.
+
+---
+
+### A grid IS a graph
+
+Every \`'1'\` cell is a node. Two cells are connected if they are adjacent horizontally or vertically.
+
+\`\`\`
+1 1 0 0
+1 0 0 1
+0 0 1 1
+\`\`\`
+
+As a graph:
+\`\`\`
+[0,0]─[0,1]        [0,3]
+  |                  |
+[1,0]           [2,2]─[2,3]
+\`\`\`
+
+Three separate connected components = **3 islands**.
+
+---
+
+### DFS on a grid
+
+DFS = go as deep as possible before backtracking. On a grid: step onto a cell, then immediately visit all its neighbors, then their neighbors, etc.
+
+**The key: mark cells visited as you go**, or you'll revisit them forever.
+
+The standard trick for grids: overwrite \`'1'\` with \`'0'\` (or \`'#'\`) when you visit it. This kills it — you'll never count it again.
+
+\`\`\`csharp
+void DFS(char[][] grid, int r, int c) {
+    // base case: out of bounds OR water OR already visited
+    if (r < 0 || r >= grid.Length) return;
+    if (c < 0 || c >= grid[0].Length) return;
+    if (grid[r][c] != '1') return;
+
+    grid[r][c] = '0';   // mark visited — flood fill
+
+    DFS(grid, r + 1, c);   // down
+    DFS(grid, r - 1, c);   // up
+    DFS(grid, r, c + 1);   // right
+    DFS(grid, r, c - 1);   // left
+}
+\`\`\`
+
+This is the same structure as tree DFS — base case, then recurse on neighbors. Instead of \`left\` and \`right\`, you have 4 directions.
+
+---
+
+### The full Number of Islands algorithm
+
+1. Scan every cell
+2. When you find a \`'1'\` → new island, increment count, flood fill it
+3. After flood fill, all connected \`'1'\`s are now \`'0'\` — won't be counted again
+
+\`\`\`csharp
+public int NumIslands(char[][] grid) {
+    int count = 0;
+
+    for (int r = 0; r < grid.Length; r++) {
+        for (int c = 0; c < grid[0].Length; c++) {
+            if (grid[r][c] == '1') {
+                count++;
+                DFS(grid, r, c);   // erase the whole island
+            }
+        }
+    }
+
+    return count;
+}
+\`\`\`
+
+---
+
+### Trace through an example
+
+\`\`\`
+1 1 0
+0 0 1
+\`\`\`
+
+\`\`\`
+Scan [0,0]: '1' → count=1, DFS floods:
+  mark [0,0]='0', visit neighbors
+  → [0,1]='1' → mark '0', visit neighbors
+    → [0,2]='0' → stop
+    → [1,1]='0' → stop
+  → [1,0]='0' → stop
+
+Grid is now:
+0 0 0
+0 0 1
+
+Scan [0,1]: '0' → skip
+Scan [0,2]: '0' → skip
+Scan [1,0]: '0' → skip
+Scan [1,1]: '0' → skip
+Scan [1,2]: '1' → count=2, DFS floods [1,2]
+
+Final count: 2
+\`\`\`
+
+---
+
+### DFS vs BFS — which to use?
+
+Both work for flood fill. The difference is order of traversal:
+
+| | DFS | BFS |
+|---|---|---|
+| Goes | deep first | wide first |
+| Uses | recursion (call stack) | queue |
+| For islands | either works | either works |
+| For shortest path | no | yes |
+
+For counting islands, use DFS — it's simpler to write recursively.
+
+---
+
+### Common mistakes
+
+**1. Forgetting to check bounds before accessing the cell:**
+\`\`\`csharp
+// CRASH — check bounds first
+if (grid[r][c] != '1') return;          // wrong order
+if (r < 0 || r >= grid.Length) return;  // must be first
+\`\`\`
+
+**2. Not marking visited — infinite loop:**
+\`\`\`csharp
+// Without grid[r][c] = '0', DFS calls itself forever
+// [0,0] visits [0,1], [0,1] visits [0,0], [0,0] visits [0,1]...
+\`\`\`
+
+**3. Diagonal neighbors — the problem says horizontal/vertical only:**
+\`\`\`csharp
+// Do NOT include diagonals for Number of Islands
+DFS(grid, r+1, c+1);  // wrong — diagonal
+\`\`\`
+
+---
+
+### Summary
+
+- A graph is nodes + edges. A grid is a graph where cells connect to adjacent neighbors.
+- DFS on a grid = same pattern as tree DFS, but 4 directions instead of 2.
+- Always mark cells visited before recursing, or you'll loop forever.
+- Flood fill is just DFS that erases as it goes.`
+  },
+  {
+    id: "dynamic-programming",
+    name: "Dynamic Programming",
+    icon: "🧮",
+    category: "Algorithms",
+    tag: "alg",
+    content: `## Dynamic Programming
+
+### What problem does DP actually solve?
+
+Before anything else — DP is not a data structure. It is not a trick. It is an observation about your problem that lets you avoid redundant computation.
+
+That observation is: **you are solving the same subproblem multiple times.**
+
+If that is not true about your problem, DP does not apply. If it is true, DP can collapse an exponential solution into a polynomial one.
+
+---
+
+### Start with recursion — see the waste
+
+Take Fibonacci: \`fib(n) = fib(n-1) + fib(n-2)\`.
+
+Plain recursion for \`fib(5)\`:
+
+\`\`\`
+fib(5)
+  fib(4)
+    fib(3)
+      fib(2)
+        fib(1) → 1
+        fib(0) → 0
+      fib(1) → 1
+    fib(2)          ← computed AGAIN
+      fib(1) → 1
+      fib(0) → 0
+  fib(3)            ← computed AGAIN
+    fib(2)          ← computed AGAIN
+      fib(1) → 1
+      fib(0) → 0
+    fib(1) → 1
+\`\`\`
+
+\`fib(2)\` is computed 3 times. \`fib(3)\` is computed 2 times. For \`fib(50)\`, \`fib(2)\` is computed billions of times. The tree of calls grows exponentially — O(2^n).
+
+The waste is obvious: you already know the answer to \`fib(2)\` after computing it once. Why compute it again?
+
+---
+
+### The fix: remember answers you have already computed
+
+This is called **memoization** (top-down DP).
+
+The idea before any code: you need a lookup table that ALL recursive calls share. Not a local variable inside \`Fib\` — that would be a fresh empty table for every call. It must live OUTSIDE so every call reads from and writes to the same table.
+
+\`fib(5)\` calls \`fib(3)\`. \`fib(4)\` also calls \`fib(3)\`. Both calls hit the same table:
+
+\`\`\`
+fib(3) runs first → computes answer → saves it in memo[3]
+fib(3) runs again → sees memo[3] already has an answer → returns it instantly
+\`\`\`
+
+Without the shared table, \`fib(3)\` recomputes from scratch every time. With it, it computes once and every future call is a free lookup.
+
+The \`-1\` is just a sentinel — a value that can never be a real Fibonacci answer — so you can tell the difference between "not computed yet" and a stored result.
+
+Every call does exactly three things in this order:
+1. Is this a base case? Return immediately.
+2. Is \`memo[n]\` already filled? Return the stored answer.
+3. Neither — compute it, save it in \`memo[n]\`, return it.
+
+\`\`\`csharp
+int[] memo = new int[n + 1];   // shared table — lives OUTSIDE Fib
+Array.Fill(memo, -1);           // -1 = not computed yet
+
+int Fib(int n) {
+    if (n <= 1) return n;                          // 1. base case
+    if (memo[n] != -1) return memo[n];             // 2. already computed
+    memo[n] = Fib(n - 1) + Fib(n - 2);            // 3. compute and save
+    return memo[n];
+}
+\`\`\`
+
+Now \`fib(2)\` is computed exactly once. Every subsequent call hits the memo and returns instantly.
+
+The call tree collapses from O(2^n) to O(n) — each value computed exactly once.
+
+---
+
+### Why is it called top-down?
+
+Because you start at the top (the big problem) and recurse down toward the base cases, saving answers along the way.
+
+You only compute what you actually need.
+
+---
+
+### The other approach: bottom-up (tabulation)
+
+Instead of starting at the top and recursing, start at the base cases and build upward.
+
+\`\`\`csharp
+int[] dp = new int[n + 1];
+dp[0] = 0;
+dp[1] = 1;
+
+for (int i = 2; i <= n; i++) {
+    dp[i] = dp[i-1] + dp[i-2];   // use already-computed values
+}
+
+return dp[n];
+\`\`\`
+
+No recursion. No call stack. You fill a table from left to right, each cell depending only on previous cells.
+
+\`\`\`
+i:    0  1  2  3  4  5
+dp:   0  1  1  2  3  5
+\`\`\`
+
+---
+
+### Top-down vs bottom-up — what is the actual difference?
+
+| | Top-down (memo) | Bottom-up (tabulation) |
+|---|---|---|
+| Direction | big problem to base cases | base cases to big problem |
+| How | recursion + cache | loop + array |
+| Computes | only what is needed | everything up to n |
+| Stack overflow risk | yes (deep recursion) | no |
+| Easier to write | usually | requires knowing fill order |
+
+Both are DP. Both give the same answer. Choose based on which is easier to think about for a given problem.
+
+---
+
+### What makes a problem solvable with DP?
+
+Two properties must hold:
+
+**1. Overlapping subproblems** — the same smaller problem appears multiple times in the recursion tree. Fibonacci has this. Binary search does NOT — each subproblem is unique.
+
+**2. Optimal substructure** — the optimal answer to the big problem can be built from optimal answers to subproblems.
+
+Example of optimal substructure: the shortest path from A to C through B is the shortest path from A to B plus the shortest path from B to C. You do not need to know anything else about the full path.
+
+If your problem has both properties, DP applies.
+
+---
+
+### The hardest part: defining the state
+
+The state is what you store in your memo or dp array. Defining it correctly is the whole skill.
+
+Ask yourself: **what information do I need to solve a subproblem uniquely?**
+
+For Fibonacci: just \`n\`. So \`dp[n]\` is enough.
+
+For a 2D grid problem: you need both row and column. So \`dp[r][c]\`.
+
+For a knapsack problem: you need the item index AND the remaining capacity. So \`dp[i][w]\`.
+
+The state defines the shape of your dp array. Get the state wrong and the whole solution breaks.
+
+---
+
+### The recurrence relation
+
+Once you have the state, you need the formula: how does \`dp[i]\` depend on previous values?
+
+This comes from asking: **if I know the answer to all smaller subproblems, how do I compute the current one?**
+
+For Fibonacci:
+\`\`\`
+dp[i] = dp[i-1] + dp[i-2]
+\`\`\`
+
+For minimum cost to climb stairs:
+\`\`\`
+dp[i] = cost[i] + min(dp[i-1], dp[i-2])
+\`\`\`
+
+For longest common subsequence:
+\`\`\`
+if chars match:   dp[i][j] = dp[i-1][j-1] + 1
+if chars differ:  dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+\`\`\`
+
+The recurrence IS the algorithm. Everything else is bookkeeping.
+
+---
+
+### How to approach a DP problem step by step
+
+1. **Write the brute force recursion first.** Do not think about DP yet. Just solve it recursively.
+2. **Draw the recursion tree.** Find where the same subproblem appears more than once.
+3. **Add a memo array.** Cache the result of each subproblem by its state.
+4. **Optionally convert to bottom-up.** Fill a table in the order subproblems depend on each other.
+
+If you cannot write the recursion, you cannot write the DP. The recursion IS the DP — just without the caching.
+
+---
+
+### Common mistake: jumping straight to the table
+
+Many people see a DP problem and immediately try to fill a 2D table without understanding why. They copy a pattern without knowing what the cells mean.
+
+Always know: **what does \`dp[i]\` (or \`dp[i][j]\`) represent in English?** If you cannot answer that in one sentence, you do not understand your own solution.
+
+---
+
+### Worked example: Coin Change
+
+This is a better example than Fibonacci because the state is not immediately obvious.
+
+**Problem:** given coins \`[1, 5, 10]\` and a target amount \`11\`, what is the minimum number of coins to make \`11\`?
+
+**Step 1 — Write the recursion first.**
+
+At each step you ask: if I pick coin \`c\`, what is the minimum coins needed for the remaining amount \`amount - c\`?
+
+\`\`\`csharp
+int MinCoins(int[] coins, int amount) {
+    if (amount == 0) return 0;
+    if (amount < 0) return int.MaxValue;
+
+    int best = int.MaxValue;
+    foreach (int c in coins) {
+        int sub = MinCoins(coins, amount - c);
+        if (sub != int.MaxValue)
+            best = Math.Min(best, 1 + sub);
+    }
+    return best;
+}
+\`\`\`
+
+This works but is exponential — \`MinCoins(amount=6)\` gets called dozens of times.
+
+**Step 2 — Identify the state.**
+
+What uniquely identifies a subproblem? Just the remaining \`amount\`. So \`memo[amount]\` is enough.
+
+**Step 3 — Add memo (top-down).**
+
+\`\`\`csharp
+int[] memo = new int[amount + 1];
+Array.Fill(memo, -1);
+
+int MinCoins(int[] coins, int amount) {
+    if (amount == 0) return 0;
+    if (amount < 0) return int.MaxValue;
+    if (memo[amount] != -1) return memo[amount];
+
+    int best = int.MaxValue;
+    foreach (int c in coins) {
+        int sub = MinCoins(coins, amount - c);
+        if (sub != int.MaxValue)
+            best = Math.Min(best, 1 + sub);
+    }
+    memo[amount] = best;
+    return best;
+}
+\`\`\`
+
+**Step 4 — Convert to bottom-up.**
+
+Fill \`dp[0]\` through \`dp[amount]\`. \`dp[i]\` = minimum coins to make amount \`i\`.
+
+\`\`\`csharp
+int[] dp = new int[amount + 1];
+Array.Fill(dp, int.MaxValue);
+dp[0] = 0;
+
+for (int i = 1; i <= amount; i++) {
+    foreach (int c in coins) {
+        if (i - c >= 0 && dp[i - c] != int.MaxValue) {
+            dp[i] = Math.Min(dp[i], 1 + dp[i - c]);
+        }
+    }
+}
+
+return dp[amount] == int.MaxValue ? -1 : dp[amount];
+\`\`\`
+
+Trace for coins = \`[1,5,10]\`, amount = \`11\`:
+
+\`\`\`
+dp[0]  = 0
+dp[1]  = 1 + dp[0]  = 1        (use coin 1)
+dp[5]  = min(1+dp[4], 1+dp[0]) = 1   (use coin 5)
+dp[10] = 1                            (use coin 10)
+dp[11] = min(1+dp[10], 1+dp[6]) = 2  (10+1)
+\`\`\`
+
+Answer: 2 coins. Correct.
+
+Notice: \`dp[i]\` in English = "minimum coins to make exactly amount i". Always be able to say this.
+
+---
+
+### How to recognize a DP problem
+
+These phrases in the problem statement are strong signals:
+
+| Phrase | Example |
+|---|---|
+| "minimum number of..." | minimum coins to make amount |
+| "maximum number of..." | maximum profit from stock prices |
+| "count the number of ways..." | count paths from top-left to bottom-right |
+| "can you reach / achieve..." | can you make this sum with these numbers |
+| "longest / shortest subsequence..." | longest common subsequence |
+
+Also look for: choices at each step where you pick one option and the rest of the problem is the same shape. That self-similarity is the recursion, and repeated subproblems means DP.
+
+What does NOT suggest DP: problems where every subproblem is unique (binary search, most graph traversals), or where you just need one pass over the data.
+
+---
+
+### Space optimization
+
+Many DP solutions use an array of size n but only ever look at the last 1 or 2 values.
+
+Fibonacci only needs the previous two values:
+
+\`\`\`csharp
+// O(n) space
+int[] dp = new int[n + 1];
+dp[0] = 0; dp[1] = 1;
+for (int i = 2; i <= n; i++) dp[i] = dp[i-1] + dp[i-2];
+return dp[n];
+
+// O(1) space — just keep the last two
+int a = 0, b = 1;
+for (int i = 2; i <= n; i++) {
+    int c = a + b;
+    a = b;
+    b = c;
+}
+return b;
+\`\`\`
+
+When to optimize: after you have a working solution, check how far back your recurrence looks. If it only looks back a fixed number of steps, replace the array with that many variables.
+
+Do not optimize space first. Get the table working, understand it, then optimize.
+
+---
+
+### Classic DP problems and why DP fits each one
+
+| Problem | What varies | Why DP fits |
+|---|---|---|
+| Fibonacci | n | fib(3) needed by fib(4) and fib(5) — computed twice without memo |
+| Climbing Stairs | current step | ways to reach step i = ways to reach i-1 + ways to reach i-2 — same overlap |
+| Coin Change | remaining amount | MinCoins(6) called from MinCoins(7) and MinCoins(11) — same subproblem |
+| House Robber | current house | rob(i) = max(skip i, rob i + rob(i-2)) — overlapping choices |
+| Longest Common Subsequence | (i, j) index pair | LCS(i,j) needed by LCS(i+1,j) and LCS(i,j+1) — 2D overlap |
+| 0/1 Knapsack | (item index, remaining capacity) | same item+capacity pair reached via different inclusion choices |
+| Unique Paths (grid) | (row, col) | paths to (r,c) = paths to (r-1,c) + paths to (r,c-1) — shared cells |
+| Word Break | start index in string | can_break(i) needed repeatedly from different earlier positions |
+
+**Pattern to notice:** in every single one, the same subproblem is reached from multiple different places in the recursion. That is the signal. If you draw the recursion tree and see the same node appear more than once — DP will help.
+
+---
+
+### Summary
+
+| Concept | What it means |
+|---|---|
+| Overlapping subproblems | same sub-calculation needed multiple times |
+| Optimal substructure | big answer built from small optimal answers |
+| Memoization | cache recursion results top-down |
+| Tabulation | fill table bottom-up |
+| State | what uniquely identifies a subproblem |
+| Recurrence | formula relating current state to previous states |
+
+DP = recursion + not repeating yourself.`
   }
 ];
 
