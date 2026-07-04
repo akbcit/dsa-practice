@@ -6497,10 +6497,10 @@ public int MaxArea(int[] height) {
   function collectDeclared(clean) {
     const declared = new Set(CS_KEYWORDS);
     const patterns = [
-      /(?:var|int|long|double|float|bool|char|string|byte|uint|short|object)\s+(\w+)/g,
-      /\b[A-Z]\w*(?:<[^>]+>)?(?:\[\])?\s+([a-z_]\w*)\s*[=;,)]/g,
+      /(?:var|int|long|double|float|bool|char|string|byte|uint|short|object)(?:\[[\],]*\])?\s+(\w+)/g,
+      /\b[A-Z]\w*(?:<[^>]+>)?(?:\[[\],]*\])?\s+([a-z_]\w*)\s*[=;,)]/g,
       /(?:List|Dictionary|HashSet|Stack|Queue|SortedSet|IList|ICollection|IEnumerable|LinkedList|PriorityQueue|SortedDictionary)<[^<>]*(?:<[^<>]*>[^<>]*)*>\s+(\w+)/g,
-      /\w+(?:<[^>]+>)?\[\]\s+(\w+)/g,
+      /\w+(?:<[^>]+>)?\[[\],]*\]\s+(\w+)/g,
       /foreach\s*\(\s*(?:var|\w+(?:<[^>]+>)?(?:\[\])?)\s+(\w+)\s+in/g,
       /\(\s*(?:(?:ref|out|in|params)\s+)?(?:[\w<>\[\]]+)\s+(\w+)\s*[,)]/g,
       /,\s*(?:(?:ref|out|in|params)\s+)?(?:[\w<>\[\]]+(?:<[^>]+>)?(?:\[\])?)\s+(\w+)\s*[,)]/g,
