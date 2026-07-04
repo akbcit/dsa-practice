@@ -1500,11 +1500,12 @@ class Program {
     id: 70, title: "Climbing Stairs", difficulty: "easy", pattern: "Dynamic Programming",
     description: `You are climbing a staircase. It takes <code>n</code> steps to reach the top.<br><br>Each time you can either climb <code>1</code> or <code>2</code> steps. In how many distinct ways can you climb to the top?`,
     examples: [
-      { input: "n = 2", output: "2", explanation: "1+1 or 2" },
-      { input: "n = 3", output: "3", explanation: "1+1+1, 1+2, 2+1" }
+      { input: "n = 2", output: "2", explanation: "Two ways: (1+1) or (2)" },
+      { input: "n = 3", output: "3", explanation: "Three ways: (1+1+1), (1+2), (2+1)" },
+      { input: "n = 5", output: "8", explanation: "Eight ways. dp table: [1,1,2,3,5,8] — answer is dp[5]" }
     ],
     constraints: ["1 <= n <= 45"],
-    hint: "Fibonacci! dp[i] = dp[i-1] + dp[i-2]. You can reach step i from step i-1 (1 step) or step i-2 (2 steps).",
+    hint: "dp[i] = dp[i-1] + dp[i-2]. To reach step i you came from step i-1 (took 1 step) OR step i-2 (took 2 steps). The formula comes from the rules of the problem.",
     starterCode: `public class Solution {
     public int ClimbStairs(int n) {
         // Your solution here
@@ -1515,9 +1516,9 @@ class Program {
 class Program {
     static void Main() {
         var sol = new Solution();
-        Console.WriteLine(sol.ClimbStairs(2)); // 2
-        Console.WriteLine(sol.ClimbStairs(3)); // 3
-        Console.WriteLine(sol.ClimbStairs(5)); // 8
+        Console.WriteLine(sol.ClimbStairs(2)); // 2  → ways: (1+1), (2)
+        Console.WriteLine(sol.ClimbStairs(3)); // 3  → ways: (1+1+1), (1+2), (2+1)
+        Console.WriteLine(sol.ClimbStairs(5)); // 8  → dp: [1,1,2,3,5,8]
     }
 }`
   },
@@ -1525,11 +1526,12 @@ class Program {
     id: 198, title: "House Robber", difficulty: "medium", pattern: "Dynamic Programming",
     description: `You are a professional robber planning to rob houses along a street. Each house has a certain amount of money stashed. Adjacent houses have security systems connected — if two adjacent houses are broken into on the same night, the police will be alerted.<br><br>Given an integer array <code>nums</code> representing the amount of money of each house, return the maximum amount of money you can rob tonight without alerting the police.`,
     examples: [
-      { input: "nums = [1,2,3,1]", output: "4", explanation: "Rob house 1 (1) + house 3 (3) = 4" },
-      { input: "nums = [2,7,9,3,1]", output: "12", explanation: "Rob house 1(2)+3(9)+5(1)=12" }
+      { input: "nums = [1,2,3,1]", output: "4", explanation: "Rob house 0 (1) + house 2 (3) = 4. Skipping house 1 is better." },
+      { input: "nums = [2,7,9,3,1]", output: "12", explanation: "Rob house 0(2) + house 2(9) + house 4(1) = 12." },
+      { input: "nums = [2,10,3,1]", output: "11", explanation: "Rob house 1(10) + house 3(1) = 11. ODD indices win here — it is NOT always even indices!" }
     ],
     constraints: ["1 <= nums.length <= 100", "0 <= nums[i] <= 400"],
-    hint: "dp[i] = max(dp[i-1], dp[i-2] + nums[i]). Either skip current house or rob it (can't rob previous).",
+    hint: "dp[i] = max(dp[i-1], dp[i-2] + nums[i]). Either skip current house or rob it (can't rob previous). It is NOT always even or odd indices — the formula decides.",
     starterCode: `public class Solution {
     public int Rob(int[] nums) {
         // Your solution here
@@ -1540,8 +1542,9 @@ class Program {
 class Program {
     static void Main() {
         var sol = new Solution();
-        Console.WriteLine(sol.Rob(new int[]{1,2,3,1}));   // 4
-        Console.WriteLine(sol.Rob(new int[]{2,7,9,3,1})); // 12
+        Console.WriteLine(sol.Rob(new int[]{1,2,3,1}));   // 4   (even indices win)
+        Console.WriteLine(sol.Rob(new int[]{2,7,9,3,1})); // 12  (even indices win)
+        Console.WriteLine(sol.Rob(new int[]{2,10,3,1}));  // 11  (odd indices win — not always even!)
     }
 }`
   },
