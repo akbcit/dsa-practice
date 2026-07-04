@@ -1457,6 +1457,35 @@ dp:   0  1  1  2  3  5
 
 ---
 
+### Wait — what is actually "dynamic" about Dynamic Programming?
+
+Honestly? The name is confusing and not very descriptive. Don't get hung up on it.
+
+The real idea has a simpler name: **don't solve the same subproblem twice.**
+
+Here is what happens WITHOUT DP for Climbing Stairs:
+
+To find ways(5), you calculate ways(4) and ways(3).
+To find ways(4), you calculate ways(3) and ways(2).
+
+You calculated ways(3) **twice**. For large n, this explodes exponentially.
+
+WITH DP (tabulation):
+
+You calculate ways(3) **once**, store it in \`dp[3]\`, and just **look it up** every time you need it.
+
+\`\`\`
+Calculate once. Store it. Reuse it.
+\`\`\`
+
+That is the entire idea. The table is just the storage.
+
+So "Dynamic Programming" really just means:
+1. Your problem has **overlapping subproblems** (same thing gets calculated multiple times)
+2. You **store the results** so you never repeat work
+
+---
+
 ### Top-down vs bottom-up — what is the actual difference?
 
 | | Top-down (memo) | Bottom-up (tabulation) |
