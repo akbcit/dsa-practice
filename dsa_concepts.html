@@ -1740,6 +1740,174 @@ Do not optimize space first. Get the table working, understand it, then optimize
 | Recurrence | formula relating current state to previous states |
 
 DP = recursion + not repeating yourself.`
+  },
+  {
+    id: "intervals",
+    name: "Intervals",
+    icon: "📏",
+    category: "Algorithms",
+    tag: "alg",
+    content: `## Intervals
+
+### What is an interval?
+
+An interval is just a start and end point: [start, end].
+
+Examples:
+  [1, 3]  →  covers 1, 2, 3
+  [2, 6]  →  covers 2, 3, 4, 5, 6
+  [8, 10] →  covers 8, 9, 10
+
+In code, intervals are usually given as a 2D array:
+  [[1,3], [2,6], [8,10]]
+
+---
+
+### The one idea that unlocks ALL interval problems: sort by start time
+
+Before doing anything else — always sort intervals by their start value.
+
+Why? Because once sorted, you only ever need to compare the CURRENT
+interval with the PREVIOUS one. You never need to look further back.
+
+  Unsorted: [[2,6], [8,10], [1,3]]  →  hard to reason about
+  Sorted:   [[1,3], [2,6], [8,10]]  →  easy to process left to right
+
+---
+
+### Do two intervals overlap?
+
+Two intervals [a,b] and [c,d] overlap if:
+  a <= d AND c <= b
+
+Simpler rule when sorted by start (c >= a always):
+  They overlap if c <= b  (new interval starts before previous one ends)
+
+  [1, 3] and [2, 6] → 2 <= 3 → overlap ✓
+  [1, 3] and [4, 6] → 4 <= 3 → NO overlap ✗
+
+---
+
+### How to merge two overlapping intervals?
+
+If [1,3] and [2,6] overlap, the merged interval is:
+  [min(1,2), max(3,6)] = [1, 6]
+
+Always:
+  merged start = min of both starts  (or just keep the earlier one if sorted)
+  merged end   = max of both ends
+
+---
+
+### The 5 interval problems and what each one asks
+
+| Problem | What it asks |
+|---|---|
+| LC 252 Meeting Rooms | Can one person attend ALL meetings? (any overlap → false) |
+| LC 56 Merge Intervals | Collapse all overlapping intervals into one |
+| LC 57 Insert Interval | Insert a new interval and merge if needed |
+| LC 435 Non-overlapping | Min intervals to REMOVE so none overlap |
+| LC 253 Meeting Rooms II | How many rooms needed? (max overlaps at once) |
+
+---
+
+### Pattern 1 — Check for ANY overlap (LC 252)
+
+Sort by start. Walk through pairs. If any consecutive pair overlaps → false.
+
+\`\`\`csharp
+Array.Sort(intervals, (a, b) => a[0] - b[0]);
+for (int i = 1; i < intervals.Length; i++) {
+    if (intervals[i][0] < intervals[i-1][1])  // overlap!
+        return false;
+}
+return true;
+\`\`\`
+
+---
+
+### Pattern 2 — Merge all overlaps (LC 56)
+
+Sort by start. Keep a "current" interval. If next overlaps, extend it.
+If not, save current and start fresh.
+
+\`\`\`csharp
+Array.Sort(intervals, (a, b) => a[0] - b[0]);
+var result = new List<int[]>();
+int[] current = intervals[0];
+
+for (int i = 1; i < intervals.Length; i++) {
+    if (intervals[i][0] <= current[1]) {
+        current[1] = Math.Max(current[1], intervals[i][1]); // extend
+    } else {
+        result.Add(current);   // no overlap, save and move on
+        current = intervals[i];
+    }
+}
+result.Add(current);
+\`\`\`
+
+---
+
+### Pattern 3 — Minimum removals (LC 435)
+
+Sort by END time. Greedily keep intervals that end earliest.
+Every time you cannot keep one, that is a removal.
+
+\`\`\`csharp
+Array.Sort(intervals, (a, b) => a[1] - b[1]);  // sort by END
+int removals = 0;
+int end = intervals[0][1];
+
+for (int i = 1; i < intervals.Length; i++) {
+    if (intervals[i][0] < end) {
+        removals++;  // overlap — remove this one
+    } else {
+        end = intervals[i][1];  // no overlap — keep it
+    }
+}
+return removals;
+\`\`\`
+
+---
+
+### Pattern 4 — How many rooms needed? (LC 253)
+
+Use a min-heap of end times. For each meeting, if the earliest-ending
+room is free (its end <= current start), reuse it. Otherwise add a room.
+
+\`\`\`csharp
+Array.Sort(intervals, (a, b) => a[0] - b[0]);
+var heap = new PriorityQueue<int,int>();
+foreach (var interval in intervals) {
+    if (heap.Count > 0 && heap.Peek() <= interval[0])
+        heap.Dequeue();  // reuse room
+    heap.Enqueue(interval[1], interval[1]);
+}
+return heap.Count;
+\`\`\`
+
+---
+
+### The mental checklist for any interval problem
+
+1. Sort by start time (almost always)
+2. Walk left to right comparing current with previous
+3. Overlapping? → merge, remove, or count
+4. Not overlapping? → save and move on
+
+---
+
+### Key facts to remember
+
+| Fact | Detail |
+|---|---|
+| Overlap check (sorted) | intervals[i][0] < intervals[i-1][1] |
+| Merge end | Math.Max(current end, new end) |
+| Sort by start | most problems |
+| Sort by end | greedy removal (LC 435) |
+| Min-heap of ends | counting rooms (LC 253) |
+`
   }
 ];
 
