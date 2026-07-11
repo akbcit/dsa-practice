@@ -3072,6 +3072,13 @@ buildSidebar(CONCEPTS);
         return;
       }
 
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 6,
+        action: 'Enter for loop — try each candidate from index ' + start
+      });
+
       for (var i = start; i < candidates.length; i++) {
         if (frames.length >= frameLimit) break;
         current.push(candidates[i]);
