@@ -2118,6 +2118,151 @@ result.Add(new List<int>(current));  // ✓ copy
 `
   },
   {
+    id: "backtracking-interactive",
+    name: "Backtracking Visualizer",
+    icon: "🎮",
+    category: "Algorithms",
+    tag: "algo",
+    content: `<div id="biv-root" style="font-family:'Inter',system-ui,sans-serif;background:#0c0c0f;color:#f0f0f5;padding:0 0 32px 0">
+
+<style>
+#biv-root * { box-sizing: border-box; }
+.biv-tabs { display:flex; gap:6px; padding:16px 0 12px 0; flex-wrap:wrap; }
+.biv-tab { background:#18181f; border:1px solid #2e2e38; color:#71717a; padding:7px 16px; border-radius:8px; font-size:13px; font-family:'Inter',sans-serif; font-weight:500; cursor:pointer; transition:all 0.15s; }
+.biv-tab:hover { border-color:#8b5cf6; color:#a78bfa; }
+.biv-tab.active { background:#1a1030; border-color:#8b5cf6; color:#a78bfa; }
+.biv-section-title { font-size:10px; color:#71717a; letter-spacing:1.4px; text-transform:uppercase; margin-bottom:8px; }
+.biv-panel { background:#111116; border:1px solid #232329; border-radius:10px; padding:14px; }
+.biv-badge { display:inline-block; background:#1a1030; border:1px solid #4c1d95; color:#a78bfa; font-size:10px; padding:2px 8px; border-radius:12px; font-family:'JetBrains Mono',monospace; }
+.biv-badge-green { background:#0a1f14; border-color:#166534; color:#34d399; }
+.biv-badge-yellow { background:#1c1400; border-color:#854d0e; color:#fbbf24; }
+.biv-btn { background:#1e1e2a; border:1px solid #3f3f52; color:#a78bfa; font-size:12px; font-family:'JetBrains Mono',monospace; padding:8px 18px; border-radius:7px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.biv-btn:hover { background:#2a2040; border-color:#8b5cf6; }
+.biv-btn:disabled { opacity:0.35; cursor:not-allowed; }
+.biv-btn-green { color:#34d399; border-color:#166534; }
+.biv-btn-green:hover { background:#0a1f14; border-color:#22c55e; }
+.biv-grid { display:grid; gap:12px; }
+.biv-input { background:#18181f; border:1px solid #2e2e38; color:#f0f0f5; font-family:'JetBrains Mono',monospace; font-size:12px; padding:6px 10px; border-radius:6px; outline:none; }
+.biv-input:focus { border-color:#8b5cf6; }
+.biv-code-line { padding:2px 10px; font-size:11.5px; font-family:'JetBrains Mono',monospace; line-height:1.75; color:#71717a; border-left:2px solid transparent; }
+.biv-code-line.active { background:#1c1400; color:#fbbf24; border-left-color:#fbbf24; }
+.biv-code-line.dim { opacity:0.4; }
+.biv-app-card { background:#111116; border:1px solid #232329; border-radius:10px; padding:14px 16px; }
+.biv-app-card:hover { border-color:#2e2e38; }
+.biv-apps-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; margin-top:12px; }
+</style>
+
+<h2 style="font-size:20px;font-weight:700;background:linear-gradient(135deg,#a78bfa,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">Backtracking Interactive Visualizer</h2>
+<p style="color:#71717a;font-size:13px;margin-bottom:0">Step through the decision tree, see state change live, watch the code highlight — problem by problem.</p>
+
+<div class="biv-tabs">
+  <button class="biv-tab active" onclick="bivSelectProblem('subsets',this)">LC 78 — Subsets</button>
+  <button class="biv-tab" onclick="bivSelectProblem('combsum',this)">LC 39 — Combination Sum</button>
+  <button class="biv-tab" onclick="bivSelectProblem('perms',this)">LC 46 — Permutations</button>
+  <button class="biv-tab" onclick="bivSelectProblem('wordsearch',this)">LC 79 — Word Search</button>
+</div>
+
+<!-- Input row -->
+<div id="biv-input-row" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:12px;color:#71717a">Array:</span>
+    <input id="biv-arr-input" class="biv-input" style="width:130px" value="1,2,3" oninput="bivRebuild()">
+  </div>
+  <div id="biv-target-row" style="display:flex;align-items:center;gap:8px;display:none">
+    <span style="font-size:12px;color:#71717a">Target:</span>
+    <input id="biv-target-input" class="biv-input" style="width:60px" value="4" oninput="bivRebuild()">
+  </div>
+  <div id="biv-word-row" style="display:none;align-items:center;gap:8px">
+    <span style="font-size:12px;color:#71717a">Find word:</span>
+    <input id="biv-word-input" class="biv-input" style="width:100px" value="SEA" oninput="bivRebuild()">
+  </div>
+</div>
+
+<!-- Main layout -->
+<div style="display:grid;grid-template-columns:1fr 340px;gap:12px;align-items:start">
+
+  <!-- Left: tree / grid visualizer -->
+  <div>
+    <div class="biv-section-title">Decision Tree</div>
+    <div class="biv-panel" style="padding:10px;min-height:260px;position:relative">
+      <svg id="biv-svg" style="width:100%;display:block;overflow:visible" viewBox="0 0 600 300"></svg>
+      <!-- Word search grid (hidden by default) -->
+      <div id="biv-wsgrid" style="display:none;justify-content:center;align-items:center;padding:10px">
+        <div id="biv-wsgrid-inner" style="display:inline-grid;gap:4px"></div>
+      </div>
+    </div>
+    <div id="biv-action" style="text-align:center;font-size:12px;color:#fbbf24;min-height:22px;margin-top:10px;padding:0 4px"></div>
+  </div>
+
+  <!-- Right: state + code -->
+  <div style="display:flex;flex-direction:column;gap:10px">
+
+    <!-- State panel -->
+    <div>
+      <div class="biv-section-title">State</div>
+      <div class="biv-panel" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">current</div>
+          <div id="biv-state-current" style="font-size:13px;color:#34d399;font-weight:700;font-family:'JetBrains Mono',monospace;word-break:break-all">[]</div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px" id="biv-state-aux-label">index</div>
+          <div id="biv-state-aux" style="font-size:13px;color:#a78bfa;font-weight:700;font-family:'JetBrains Mono',monospace">0</div>
+        </div>
+        <div style="grid-column:1/-1">
+          <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">results found</div>
+          <div id="biv-state-results" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#34d399;line-height:1.8;max-height:80px;overflow-y:auto"></div>
+        </div>
+        <div style="grid-column:1/-1">
+          <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">call stack</div>
+          <div id="biv-state-stack" style="font-size:11px;font-family:'JetBrains Mono',monospace;line-height:1.8;max-height:80px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code panel -->
+    <div>
+      <div class="biv-section-title">Code <span id="biv-code-lang" class="biv-badge" style="font-size:9px;margin-left:4px">C#</span></div>
+      <div class="biv-panel" style="padding:6px 0;overflow-x:auto">
+        <div id="biv-code-panel" style="min-width:300px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Controls -->
+<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap">
+  <button class="biv-btn" id="biv-btn-back" onclick="bivStep(-1)">← Back</button>
+  <button class="biv-btn biv-btn-green" id="biv-btn-play" onclick="bivTogglePlay()">▶ Play</button>
+  <button class="biv-btn" id="biv-btn-fwd" onclick="bivStep(1)">Step →</button>
+  <button class="biv-btn" onclick="bivReset()" style="color:#71717a">↺ Reset</button>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:8px">
+    <span style="font-size:11px;color:#71717a">Speed</span>
+    <input type="range" id="biv-speed" min="1" max="5" value="3" style="width:80px;accent-color:#8b5cf6">
+    <span style="font-size:11px;color:#71717a">Fast</span>
+  </div>
+  <span id="biv-step-counter" style="color:#71717a;font-size:12px;font-family:'JetBrains Mono',monospace;min-width:80px;text-align:center">1 / 1</span>
+</div>
+
+<div style="margin-top:32px">
+  <h3 style="font-size:15px;font-weight:700;color:#f0f0f5;margin-bottom:4px">Real-World Applications of Backtracking</h3>
+  <p style="font-size:12px;color:#71717a;margin-bottom:0">Backtracking is not just a LeetCode pattern — it powers real software you use every day.</p>
+  <div class="biv-apps-grid">
+    <div class="biv-app-card"><div style="font-size:14px;margin-bottom:5px">🧩 Sudoku Solver</div><div style="font-size:12px;color:#71717a">Fill each cell, check row/col/box constraints. Hit a conflict? Erase and backtrack to the previous cell. Classic constraint satisfaction.</div></div>
+    <div class="biv-app-card"><div style="font-size:14px;margin-bottom:5px">♛ N-Queens</div><div style="font-size:12px;color:#71717a">Place N queens so none attack each other. Try column by column — if a queen conflicts, remove it and try the next row.</div></div>
+    <div class="biv-app-card"><div style="font-size:14px;margin-bottom:5px">♟ Chess Engines</div><div style="font-size:12px;color:#71717a">Alpha-beta pruning is backtracking on a move tree. Explore a branch, if it can't beat the current best, backtrack and prune the rest.</div></div>
+    <div class="biv-app-card"><div style="font-size:14px;margin-bottom:5px">🔤 Regex Engines</div><div style="font-size:12px;color:#71717a">When a pattern like <code style="color:#a78bfa">a*b</code> fails to match at one expansion length, the engine backtracks and tries another. NFA simulation is backtracking.</div></div>
+    <div class="biv-app-card"><div style="font-size:14px;margin-bottom:5px">🛠 Compilers / Parsers</div><div style="font-size:12px;color:#71717a">Recursive-descent parsers try grammar rules. If a rule doesn't match the token stream, they backtrack to the call site and try the next alternative.</div></div>
+    <div class="biv-app-card"><div style="font-size:14px;margin-bottom:5px">🗺 GPS / Route Planning</div><div style="font-size:12px;color:#71717a">DFS explores road paths. Dead end? Backtrack to the junction and try another road. Dijkstra is basically backtracking with pruning via priority queue.</div></div>
+    <div class="biv-app-card"><div style="font-size:14px;margin-bottom:5px">📰 Crossword Generation</div><div style="font-size:12px;color:#71717a">Place words in a grid, constrained by crossing letters. Conflict? Remove the last placed word and try the next dictionary candidate.</div></div>
+    <div class="biv-app-card"><div style="font-size:14px;margin-bottom:5px">➕ Cryptarithmetic</div><div style="font-size:12px;color:#71717a">SEND + MORE = MONEY — assign digits to letters. Try each assignment, check arithmetic constraints, backtrack on contradiction.</div></div>
+  </div>
+</div>
+
+</div>`
+  },
+  {
     id: "heap",
     name: "Heap / Priority Queue",
     icon: "🏔",
@@ -2540,6 +2685,848 @@ buildSidebar(CONCEPTS);
     if (svg && !svg.children.length) { _step = 0; draw(svg); render(); }
   });
   obs.observe(document.body, {childList: true, subtree: true});
+})();
+</script>
+<script>
+// ── BACKTRACKING INTERACTIVE VISUALIZER (BIV) ─────────────────────────────────
+(function () {
+  'use strict';
+
+  // ── colour palette ──────────────────────────────────────────────────────────
+  var C = {
+    bg:'#0c0c0f', surface:'#111116', border:'#232329', border2:'#2e2e38',
+    muted:'#3f3f52', text:'#71717a', textHi:'#f0f0f5',
+    accent:'#a78bfa', accentDim:'#4c1d95',
+    green:'#34d399', greenDim:'#166534', greenBg:'#0a1f14',
+    yellow:'#fbbf24', yellowDim:'#854d0e', yellowBg:'#1c1400',
+    pathBg:'#16122a', activeBg:'#1f1a08', nodeStroke:'#2e2e38'
+  };
+
+  // ── current problem state ───────────────────────────────────────────────────
+  var bivProblem = 'subsets';
+  var bivFrames  = [];
+  var bivIdx     = 0;
+  var bivTimer   = null;
+  var bivCodes   = {};
+
+  // ── C# code for each problem ────────────────────────────────────────────────
+  bivCodes.subsets = [
+    'void dfs(int i) {',
+    '  if (i == nums.Length) {',
+    '    result.Add(new List<int>(current));',
+    '    return;',
+    '  }',
+    '  // skip nums[i]',
+    '  dfs(i + 1);',
+    '  // include nums[i]',
+    '  current.Add(nums[i]);',
+    '  dfs(i + 1);',
+    '  current.RemoveAt(current.Count - 1);',
+    '}'
+  ];
+  bivCodes.combsum = [
+    'void dfs(int start, int remaining) {',
+    '  if (remaining == 0) {',
+    '    result.Add(new List<int>(current));',
+    '    return;',
+    '  }',
+    '  if (remaining < 0) return;',
+    '  for (int i = start; i < candidates.Length; i++) {',
+    '    current.Add(candidates[i]);',
+    '    dfs(i, remaining - candidates[i]);',
+    '    current.RemoveAt(current.Count - 1);',
+    '  }',
+    '}'
+  ];
+  bivCodes.perms = [
+    'void dfs() {',
+    '  if (current.Count == nums.Length) {',
+    '    result.Add(new List<int>(current));',
+    '    return;',
+    '  }',
+    '  for (int i = 0; i < nums.Length; i++) {',
+    '    if (used[i]) continue;',
+    '    used[i] = true;',
+    '    current.Add(nums[i]);',
+    '    dfs();',
+    '    current.RemoveAt(current.Count - 1);',
+    '    used[i] = false;',
+    '  }',
+    '}'
+  ];
+  bivCodes.wordsearch = [
+    'bool dfs(int r, int c, int k) {',
+    '  if (k == word.Length) return true;',
+    '  if (r<0||r>=rows||c<0||c>=cols) return false;',
+    '  if (board[r][c] != word[k]) return false;',
+    '  char tmp = board[r][c];',
+    '  board[r][c] = \'#\'; // mark visited',
+    '  bool found = dfs(r+1,c,k+1) || dfs(r-1,c,k+1)',
+    '             || dfs(r,c+1,k+1) || dfs(r,c-1,k+1);',
+    '  board[r][c] = tmp; // backtrack',
+    '  return found;',
+    '}'
+  ];
+
+  // ── FRAME RECORDERS ─────────────────────────────────────────────────────────
+  // Helper: push a frame into the frames array
+  // We do NOT snapshot nodes/edges here — rendering uses bivAllNodes/bivAllEdges.
+  // For grid frames, we DO snapshot the grid since it mutates in-place.
+  function pushFrame(frames, type, opts) {
+    frames.push({
+      type: type,
+      activeNode: opts.activeNode || null,
+      grid: opts.grid ? opts.grid.map(function(r){ return r.slice(); }) : null,
+      path: opts.path ? opts.path.map(function(p){ return p.slice(); }) : null,
+      current: Array.isArray(opts.current) ? opts.current.slice() : opts.current,
+      results: opts.results ? opts.results.slice() : [],
+      stack: opts.stack ? opts.stack.slice() : [],
+      aux: opts.aux || '',
+      auxLabel: opts.auxLabel || 'index',
+      codeLine: opts.codeLine || 0,
+      action: opts.action || ''
+    });
+  }
+
+  function recordSubsets(numsArr) {
+    var frames = [];
+    var current = [];
+    var results = [];
+    var nodes = {};
+    var edges = [];
+    var nodeId = 0;
+
+    // Guard: cap at 4 elements to keep tree manageable
+    if (numsArr.length > 4) numsArr = numsArr.slice(0, 4);
+
+    function dfs(i, depth, parentId, parentX, branchIdx, totalSiblings, callStack) {
+      var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * (280 / Math.pow(2, depth));
+      var x = parentX + spread;
+      var y = 24 + depth * 68;
+      var id = 'n' + (nodeId++);
+      nodes[id] = { x: x, y: y, r: Math.max(10, 19 - depth * 2), label: 'i=' + i, sub: '[' + current.join(',') + ']', leaf: false };
+      if (parentId !== null) {
+        edges.push({ from: parentId, to: id, label: branchIdx === 0 ? 'skip' : '+' + numsArr[i - 1] });
+      }
+
+      var myStack = callStack.concat(['dfs(' + i + ')']);
+      var auxStr = 'i=' + i;
+
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: auxStr, auxLabel: 'index', codeLine: 0,
+        action: depth === 0
+          ? 'Start — dfs(0), current=[]'
+          : (branchIdx === 0
+            ? 'Skip nums[' + (i-1) + ']=' + numsArr[i-1] + ' — dfs(' + i + ') unchanged'
+            : 'Include nums[' + (i-1) + ']=' + numsArr[i-1] + ' — pushed, now dfs(' + i + ')')
+      });
+
+      if (i === numsArr.length) {
+        nodes[id].leaf = true; nodes[id].label = 'BASE'; nodes[id].sub = '[' + current.join(',') + ']';
+        var snap = current.slice();
+        results.push('[' + snap.join(',') + ']');
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: auxStr, auxLabel: 'index', codeLine: 2,
+          action: 'BASE — i==' + numsArr.length + ', record [' + snap.join(',') + ']'
+        });
+        return id;
+      }
+
+      dfs(i + 1, depth + 1, id, x, 0, 2, myStack);
+
+      current.push(numsArr[i]);
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: auxStr, auxLabel: 'index', codeLine: 8,
+        action: 'current.Add(' + numsArr[i] + ') → current=[' + current.join(',') + ']'
+      });
+      dfs(i + 1, depth + 1, id, x, 1, 2, myStack);
+      current.pop();
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: auxStr, auxLabel: 'index', codeLine: 10,
+        action: 'BACKTRACK — RemoveAt() → current=[' + current.join(',') + ']'
+      });
+      return id;
+    }
+
+    dfs(0, 0, null, 300, 0, 1, []);
+    return { frames: frames, nodes: nodes, edges: edges };
+  }
+
+  function recordCombSum(candidates, target) {
+    var frames = [];
+    var current = [];
+    var results = [];
+    var nodes = {};
+    var edges = [];
+    var nodeId = 0;
+    var frameLimit = 300; // prevent runaway
+
+    // Guard
+    if (candidates.length > 5) candidates = candidates.slice(0, 5);
+    if (target > 12) target = 12;
+
+    function dfs(start, remaining, depth, parentId, parentX, branchIdx, totalSiblings, callStack) {
+      if (frames.length >= frameLimit) return;
+      var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * Math.max(18, 220 / Math.pow(2, Math.max(1, depth)));
+      var x = parentX + spread;
+      var y = 24 + depth * 66;
+      var id = 'n' + (nodeId++);
+      nodes[id] = { x: x, y: y, r: Math.max(9, 18 - depth * 1.5), label: 'r=' + remaining, sub: '[' + current.join(',') + ']', leaf: false };
+      if (parentId !== null) {
+        edges.push({ from: parentId, to: id, label: current.length ? '+' + current[current.length-1] : '' });
+      }
+
+      var myStack = callStack.concat(['dfs(' + start + ',' + remaining + ')']);
+
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 0,
+        action: 'dfs(start=' + start + ', rem=' + remaining + ') — current=[' + current.join(',') + ']'
+      });
+
+      if (remaining === 0) {
+        nodes[id].leaf = true; nodes[id].label = 'FOUND';
+        var snap = current.slice();
+        results.push('[' + snap.join(',') + ']');
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'remaining=0', auxLabel: 'remaining', codeLine: 2,
+          action: 'BASE — remaining==0, record [' + snap.join(',') + ']'
+        });
+        return;
+      }
+      if (remaining < 0) {
+        nodes[id].leaf = true; nodes[id].label = 'PRUNE';
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 5,
+          action: 'PRUNE — remaining<0, backtrack'
+        });
+        return;
+      }
+
+      for (var i = start; i < candidates.length; i++) {
+        if (frames.length >= frameLimit) break;
+        current.push(candidates[i]);
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 7,
+          action: 'Pick candidates[' + i + ']=' + candidates[i] + ' → current=[' + current.join(',') + ']'
+        });
+        dfs(i, remaining - candidates[i], depth + 1, id, x, i - start, candidates.length - start, myStack);
+        current.pop();
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 9,
+          action: 'BACKTRACK — remove ' + candidates[i] + ' → current=[' + current.join(',') + ']'
+        });
+      }
+    }
+
+    dfs(0, target, 0, null, 300, 0, 1, []);
+    return { frames: frames, nodes: nodes, edges: edges };
+  }
+
+  function recordPerms(numsArr) {
+    var frames = [];
+    var current = [];
+    var results = [];
+    var nodes = {};
+    var edges = [];
+    var nodeId = 0;
+
+    // Guard: cap at 3 for permutations (3! = 6, tree is manageable; 4! = 24 creates huge trees)
+    if (numsArr.length > 3) numsArr = numsArr.slice(0, 3);
+    var used = new Array(numsArr.length).fill(false);
+
+    function usedStr() {
+      return '[' + used.map(function(u, i) { return u ? numsArr[i] : '_'; }).join(',') + ']';
+    }
+
+    function dfs(depth, parentId, parentX, branchIdx, totalSiblings, callStack) {
+      var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * Math.max(18, 260 / Math.pow(2, Math.max(1, depth)));
+      var x = parentX + spread;
+      var y = 24 + depth * 62;
+      var id = 'n' + (nodeId++);
+      var ustr = usedStr();
+      nodes[id] = { x: x, y: y, r: Math.max(10, 18 - depth * 2), label: 'd=' + depth, sub: '[' + current.join(',') + ']', leaf: false };
+      if (parentId !== null) {
+        edges.push({ from: parentId, to: id, label: current.length ? '+' + current[current.length-1] : '' });
+      }
+
+      var myStack = callStack.concat(['dfs()']);
+
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 0,
+        action: 'dfs(depth=' + depth + ') — current=[' + current.join(',') + '] used=' + ustr
+      });
+
+      if (current.length === numsArr.length) {
+        nodes[id].leaf = true; nodes[id].label = 'DONE';
+        var snap = current.slice();
+        results.push('[' + snap.join(',') + ']');
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 2,
+          action: 'BASE — full perm [' + snap.join(',') + '] recorded'
+        });
+        return;
+      }
+
+      var availCount = used.filter(function(u) { return !u; }).length;
+      var bi = 0;
+      for (var i = 0; i < numsArr.length; i++) {
+        if (used[i]) continue;
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 6,
+          action: 'i=' + i + ': nums[' + i + ']=' + numsArr[i] + ' is free — try it'
+        });
+        used[i] = true;
+        current.push(numsArr[i]);
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 8,
+          action: 'used[' + i + ']=true, push ' + numsArr[i] + ' → current=[' + current.join(',') + ']'
+        });
+        dfs(depth + 1, id, x, bi, availCount, myStack);
+        current.pop();
+        used[i] = false;
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 11,
+          action: 'BACKTRACK — pop ' + numsArr[i] + ', used[' + i + ']=false → current=[' + current.join(',') + ']'
+        });
+        bi++;
+      }
+    }
+
+    dfs(0, null, 300, 0, 1, []);
+    return { frames: frames, nodes: nodes, edges: edges };
+  }
+
+  function recordWordSearch(grid, word) {
+    var rows = grid.length, cols = grid[0].length;
+    var frames = [];
+    var board = grid.map(function(r){ return r.slice(); });
+    var results = [];
+    var found = false;
+
+    function dfs(r, c, k, path) {
+      var pathCopy = path.slice();
+      var gridState = board.map(function(row){ return row.slice(); });
+
+      if (k === word.length) {
+        results.push(word);
+        frames.push({
+          type: 'grid', grid: gridState, path: pathCopy,
+          current: word, results: results.slice(),
+          stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
+          aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
+          codeLine: 1,
+          action: 'FOUND "' + word + '" — all ' + word.length + ' chars matched!'
+        });
+        found = true;
+        return true;
+      }
+      if (r < 0 || r >= rows || c < 0 || c >= cols) {
+        frames.push({
+          type: 'grid', grid: gridState, path: pathCopy,
+          current: '[' + pathCopy.map(function(p){ return '(' + p[0] + ',' + p[1] + ')'; }).join(',') + ']',
+          results: results.slice(),
+          stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
+          aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
+          codeLine: 2,
+          action: 'Out of bounds (' + r + ',' + c + ') — backtrack'
+        });
+        return false;
+      }
+      if (board[r][c] === '#' || board[r][c] !== word[k]) {
+        frames.push({
+          type: 'grid', grid: gridState, path: pathCopy,
+          current: '[' + pathCopy.map(function(p){ return '(' + p[0] + ',' + p[1] + ')'; }).join(',') + ']',
+          results: results.slice(),
+          stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
+          aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
+          codeLine: 3,
+          action: 'Cell (' + r + ',' + c + ')="' + (board[r][c] === '#' ? 'visited' : board[r][c]) + '" ≠ word[' + k + ']="' + word[k] + '" — backtrack'
+        });
+        return false;
+      }
+
+      frames.push({
+        type: 'grid', grid: gridState, path: pathCopy.concat([[r,c]]),
+        current: word.slice(0, k + 1),
+        results: results.slice(),
+        stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
+        aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
+        codeLine: 4,
+        action: 'Match! board[' + r + '][' + c + ']="' + word[k] + '" → mark visited, matched "' + word.slice(0, k + 1) + '"'
+      });
+
+      var tmp = board[r][c];
+      board[r][c] = '#';
+      var newPath = path.concat([[r,c]]);
+
+      var dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+      var res = false;
+      for (var d = 0; d < dirs.length; d++) {
+        if (dfs(dirs[d][0] + r, dirs[d][1] + c, k + 1, newPath)) { res = true; break; }
+      }
+
+      board[r][c] = tmp;
+      if (!res) {
+        frames.push({
+          type: 'grid', grid: board.map(function(row){ return row.slice(); }), path: path.slice(),
+          current: word.slice(0, k),
+          results: results.slice(),
+          stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
+          aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
+          codeLine: 8,
+          action: 'BACKTRACK — restore board[' + r + '][' + c + ']="' + tmp + '", remove from path'
+        });
+      }
+      return res;
+    }
+
+    for (var r = 0; r < rows && !found; r++) {
+      for (var c = 0; c < cols && !found; c++) {
+        dfs(r, c, 0, []);
+      }
+    }
+    return { frames: frames };
+  }
+
+  // ── COMPUTE FRAMES ──────────────────────────────────────────────────────────
+  function bivRebuild() {
+    var problem = bivProblem;
+    bivFrames = [];
+    bivIdx = 0;
+    bivStopPlay();
+
+    try {
+      if (problem === 'subsets') {
+        var arr = parseArr();
+        if (!arr) return;
+        var res = recordSubsets(arr);
+        bivFrames = res.frames;
+        bivDrawTree(res.nodes, res.edges);
+      } else if (problem === 'combsum') {
+        var arr = parseArr();
+        var tgt = parseInt(document.getElementById('biv-target-input').value) || 4;
+        if (!arr) return;
+        arr = arr.slice().sort(function(a,b){ return a-b; });
+        var res = recordCombSum(arr, tgt);
+        bivFrames = res.frames;
+        bivDrawTree(res.nodes, res.edges);
+      } else if (problem === 'perms') {
+        var arr = parseArr();
+        if (!arr || arr.length > 4) arr = [1,2,3];
+        var res = recordPerms(arr);
+        bivFrames = res.frames;
+        bivDrawTree(res.nodes, res.edges);
+      } else if (problem === 'wordsearch') {
+        var grid = getWordSearchGrid();
+        var word = (document.getElementById('biv-word-input').value || 'SEA').toUpperCase();
+        var res = recordWordSearch(grid, word);
+        bivFrames = res.frames;
+        bivInitGrid(grid);
+      }
+    } catch(e) {
+      console.error('BIV build error', e);
+    }
+
+    if (bivFrames.length) bivRenderFrame(0);
+    bivUpdateControls();
+  }
+
+  function parseArr() {
+    var raw = (document.getElementById('biv-arr-input').value || '').replace(/[\[\]]/g,'');
+    var parts = raw.split(',').map(function(s){ return parseInt(s.trim()); }).filter(function(n){ return !isNaN(n); });
+    return parts.length ? parts : null;
+  }
+
+  function getWordSearchGrid() {
+    var cells = document.querySelectorAll('.biv-ws-cell');
+    if (!cells.length) {
+      return [
+        ['A','B','C','E'],
+        ['S','F','C','S'],
+        ['A','D','E','E'],
+        ['X','Y','Z','S']
+      ];
+    }
+    var grid = [[],[],[],[]];
+    cells.forEach(function(cell, i) {
+      grid[Math.floor(i/4)].push((cell.value || cell.textContent || 'A').toUpperCase()[0]);
+    });
+    return grid;
+  }
+
+  // ── SVG TREE DRAW ──────────────────────────────────────────────────────────
+  var bivAllNodes = {};
+  var bivAllEdges = [];
+
+  function bivDrawTree(nodes, edges) {
+    var svg = document.getElementById('biv-svg');
+    var grid = document.getElementById('biv-wsgrid');
+    if (!svg || !grid) return;
+    svg.style.display = 'block';
+    grid.style.display = 'none';
+    svg.innerHTML = '';
+
+    bivAllNodes = nodes;
+    bivAllEdges = edges;
+
+    // Compute bounding box
+    var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    Object.values(nodes).forEach(function(n) {
+      minX = Math.min(minX, n.x - n.r - 30);
+      maxX = Math.max(maxX, n.x + n.r + 30);
+      minY = Math.min(minY, n.y - n.r - 10);
+      maxY = Math.max(maxY, n.y + n.r + 30);
+    });
+    var vw = Math.max(600, maxX - minX);
+    var vh = Math.max(200, maxY - minY + 20);
+    svg.setAttribute('viewBox', minX + ' ' + minY + ' ' + vw + ' ' + vh);
+    svg.style.height = Math.min(340, vh) + 'px';
+
+    // Draw edges
+    edges.forEach(function(e) {
+      var fp = nodes[e.from], tp = nodes[e.to];
+      if (!fp || !tp) return;
+      var line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', fp.x); line.setAttribute('y1', fp.y);
+      line.setAttribute('x2', tp.x); line.setAttribute('y2', tp.y);
+      line.setAttribute('stroke', C.border2); line.setAttribute('stroke-width', 1.5);
+      line.setAttribute('id', 'biv-e-' + e.from + '-' + e.to);
+      svg.appendChild(line);
+
+      if (e.label) {
+        var mid = document.createElementNS('http://www.w3.org/2000/svg','text');
+        mid.setAttribute('x', (fp.x + tp.x) / 2 + 6);
+        mid.setAttribute('y', (fp.y + tp.y) / 2);
+        mid.setAttribute('font-size', 8);
+        mid.setAttribute('fill', C.text);
+        mid.setAttribute('font-family', 'JetBrains Mono,monospace');
+        mid.setAttribute('text-anchor', 'middle');
+        mid.setAttribute('id', 'biv-el-' + e.from + '-' + e.to);
+        mid.textContent = e.label;
+        svg.appendChild(mid);
+      }
+    });
+
+    // Draw nodes
+    Object.entries(nodes).forEach(function(entry) {
+      var id = entry[0], n = entry[1];
+      var g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('id', 'biv-g-' + id);
+
+      var circ = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      circ.setAttribute('cx', n.x); circ.setAttribute('cy', n.y); circ.setAttribute('r', n.r);
+      circ.setAttribute('fill', C.bg); circ.setAttribute('stroke', C.border2); circ.setAttribute('stroke-width', 1.5);
+      circ.setAttribute('id', 'biv-c-' + id);
+      g.appendChild(circ);
+
+      var lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('x', n.x); lbl.setAttribute('y', n.y + 3);
+      lbl.setAttribute('font-size', Math.max(6, n.r - 4));
+      lbl.setAttribute('fill', C.text); lbl.setAttribute('text-anchor', 'middle');
+      lbl.setAttribute('font-family', 'JetBrains Mono,monospace');
+      lbl.setAttribute('id', 'biv-nl-' + id);
+      lbl.textContent = n.label;
+      g.appendChild(lbl);
+
+      var sub = document.createElementNS('http://www.w3.org/2000/svg','text');
+      sub.setAttribute('x', n.x); sub.setAttribute('y', n.y + n.r + 11);
+      sub.setAttribute('font-size', Math.max(6, n.r - 3));
+      sub.setAttribute('fill', n.leaf ? C.muted : C.textHi);
+      sub.setAttribute('text-anchor', 'middle');
+      sub.setAttribute('font-family', 'JetBrains Mono,monospace');
+      sub.setAttribute('id', 'biv-sl-' + id);
+      sub.textContent = n.sub;
+      g.appendChild(sub);
+
+      svg.appendChild(g);
+    });
+  }
+
+  // ── RENDER FRAME ───────────────────────────────────────────────────────────
+  function bivRenderFrame(idx) {
+    bivIdx = idx;
+    var f = bivFrames[idx];
+    if (!f) return;
+
+    // Update state panel
+    var elCur = document.getElementById('biv-state-current');
+    var elAux = document.getElementById('biv-state-aux');
+    var elAuxLbl = document.getElementById('biv-state-aux-label');
+    var elRes = document.getElementById('biv-state-results');
+    var elStk = document.getElementById('biv-state-stack');
+    var elAct = document.getElementById('biv-action');
+
+    if (elCur) elCur.textContent = Array.isArray(f.current) ? '[' + f.current.join(',') + ']' : f.current;
+    if (elAux) elAux.textContent = f.aux || '';
+    if (elAuxLbl) elAuxLbl.textContent = f.auxLabel || 'aux';
+    if (elAct) elAct.textContent = f.action || '';
+
+    if (elRes) {
+      elRes.innerHTML = (f.results || []).map(function(r){
+        return '<span style="color:' + C.green + ';margin-right:8px">' + r + '</span>';
+      }).join('');
+    }
+    if (elStk) {
+      var stk = f.stack || [];
+      elStk.innerHTML = stk.map(function(s, i) {
+        var isTop = i === stk.length - 1;
+        return '<div style="color:' + (isTop ? C.accent : '#404060') + ';padding-left:' + (i * 10) + 'px">' + s + (isTop ? ' ←' : '') + '</div>';
+      }).join('');
+    }
+
+    // Update step counter
+    var elCnt = document.getElementById('biv-step-counter');
+    if (elCnt) elCnt.textContent = (idx + 1) + ' / ' + bivFrames.length;
+
+    // Update code panel
+    bivRenderCode(f.codeLine);
+
+    // Update tree or grid
+    if (f.type === 'tree') {
+      bivUpdateTree(f);
+    } else if (f.type === 'grid') {
+      bivUpdateGrid(f);
+    }
+
+    // Button states
+    document.getElementById('biv-btn-back').disabled = idx === 0;
+    document.getElementById('biv-btn-fwd').disabled = idx === bivFrames.length - 1;
+  }
+
+  function bivUpdateTree(f) {
+    // Always use the full drawn node/edge set for DOM lookups
+    var allNodes = bivAllNodes;
+    var allEdges = bivAllEdges;
+
+    // Build parent map from the complete edge set
+    var activeId = f.activeNode;
+    var parentMap = {};
+    allEdges.forEach(function(e) { parentMap[e.to] = e.from; });
+
+    // Walk ancestors of active node
+    var ancestors = {};
+    var n = activeId;
+    while (n) { ancestors[n] = true; n = parentMap[n]; }
+
+    // Color edges
+    allEdges.forEach(function(e) {
+      var lineEl = document.getElementById('biv-e-' + e.from + '-' + e.to);
+      var lblEl  = document.getElementById('biv-el-' + e.from + '-' + e.to);
+      if (!lineEl) return;
+      var onPath = ancestors[e.from] && ancestors[e.to];
+      lineEl.setAttribute('stroke', onPath ? C.accent : C.border2);
+      lineEl.setAttribute('stroke-width', onPath ? 2 : 1.5);
+      if (lblEl) lblEl.setAttribute('fill', onPath ? C.accent : C.text);
+    });
+
+    // Collect leaf IDs that have been recorded up to this frame
+    var recLeaves = {};
+    for (var fi = 0; fi <= bivIdx; fi++) {
+      var ff = bivFrames[fi];
+      if (ff && ff.activeNode && allNodes[ff.activeNode] && allNodes[ff.activeNode].leaf && ff.results && ff.results.length > (fi > 0 ? (bivFrames[fi-1].results || []).length : 0)) {
+        recLeaves[ff.activeNode] = true;
+      }
+    }
+
+    // Color every node in the full tree
+    Object.keys(allNodes).forEach(function(id) {
+      var nd = allNodes[id];
+      var circEl = document.getElementById('biv-c-' + id);
+      var lblEl  = document.getElementById('biv-nl-' + id);
+      var subEl  = document.getElementById('biv-sl-' + id);
+      if (!circEl) return;
+
+      var isActive  = id === activeId;
+      var isOnPath  = ancestors[id] && !isActive;
+      var isDone    = nd.leaf && recLeaves[id] && !isActive;
+
+      circEl.setAttribute('fill',   isActive ? C.activeBg : isDone ? C.greenBg : isOnPath ? C.pathBg : C.bg);
+      circEl.setAttribute('stroke', isActive ? C.yellow   : isDone ? C.green   : isOnPath ? C.accent : C.border2);
+      circEl.setAttribute('stroke-width', isActive ? 3 : (isDone || isOnPath) ? 2 : 1.5);
+      if (lblEl) lblEl.setAttribute('fill', isActive ? C.yellow : isDone ? C.green : isOnPath ? C.accent : C.text);
+      if (subEl) {
+        subEl.setAttribute('fill', isActive ? C.yellow : isDone ? C.green : nd.leaf ? C.muted : C.textHi);
+        subEl.setAttribute('font-weight', isActive ? '700' : isDone ? '600' : '400');
+      }
+    });
+  }
+
+  // ── WORD SEARCH GRID ────────────────────────────────────────────────────────
+  function bivInitGrid(grid) {
+    var svg = document.getElementById('biv-svg');
+    var gridDiv = document.getElementById('biv-wsgrid');
+    var inner = document.getElementById('biv-wsgrid-inner');
+    if (!svg || !gridDiv || !inner) return;
+    svg.style.display = 'none';
+    gridDiv.style.display = 'flex';
+
+    var rows = grid.length, cols = grid[0].length;
+    inner.style.gridTemplateColumns = 'repeat(' + cols + ', 44px)';
+    inner.innerHTML = '';
+
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var cell = document.createElement('div');
+        cell.id = 'biv-wsc-' + r + '-' + c;
+        cell.textContent = grid[r][c];
+        cell.style.cssText = 'width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-family:JetBrains Mono,monospace;font-size:18px;font-weight:700;background:#18181f;border:2px solid #2e2e38;border-radius:8px;color:#71717a;transition:all 0.2s;cursor:default;user-select:none';
+        inner.appendChild(cell);
+      }
+    }
+  }
+
+  function bivUpdateGrid(f) {
+    var grid = f.grid;
+    var path = f.path || [];
+    var pathSet = {};
+    path.forEach(function(p, i) { pathSet[p[0] + '-' + p[1]] = i; });
+    var isFound = f.codeLine === 1 && f.results && f.results.length > 0;
+
+    for (var r = 0; r < grid.length; r++) {
+      for (var c = 0; c < grid[0].length; c++) {
+        var cell = document.getElementById('biv-wsc-' + r + '-' + c);
+        if (!cell) continue;
+        var key = r + '-' + c;
+        var inPath = pathSet.hasOwnProperty(key);
+        var isLast = path.length > 0 && path[path.length-1][0] === r && path[path.length-1][1] === c;
+        cell.textContent = grid[r][c] === '#' ? '•' : grid[r][c];
+        if (isFound && inPath) {
+          cell.style.background = '#0a1f14';
+          cell.style.borderColor = '#22c55e';
+          cell.style.color = '#34d399';
+        } else if (isLast) {
+          cell.style.background = '#1c1400';
+          cell.style.borderColor = '#fbbf24';
+          cell.style.color = '#fbbf24';
+        } else if (inPath) {
+          cell.style.background = '#16122a';
+          cell.style.borderColor = '#8b5cf6';
+          cell.style.color = '#a78bfa';
+        } else {
+          cell.style.background = '#18181f';
+          cell.style.borderColor = '#2e2e38';
+          cell.style.color = '#71717a';
+        }
+      }
+    }
+  }
+
+  // ── CODE PANEL ─────────────────────────────────────────────────────────────
+  function bivRenderCode(activeLine) {
+    var panel = document.getElementById('biv-code-panel');
+    if (!panel) return;
+    var lines = bivCodes[bivProblem] || [];
+    panel.innerHTML = lines.map(function(line, i) {
+      var cls = 'biv-code-line' + (i === activeLine ? ' active' : '');
+      return '<div class="' + cls + '">' + escHtml(line) + '</div>';
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── CONTROLS ───────────────────────────────────────────────────────────────
+  function bivStep(dir) {
+    var next = Math.max(0, Math.min(bivFrames.length - 1, bivIdx + dir));
+    bivRenderFrame(next);
+  }
+
+  function bivReset() {
+    bivStopPlay();
+    bivRebuild();
+  }
+
+  function bivTogglePlay() {
+    var btn = document.getElementById('biv-btn-play');
+    if (bivTimer) {
+      bivStopPlay();
+    } else {
+      if (btn) { btn.textContent = '⏸ Pause'; btn.style.color = '#fbbf24'; }
+      var go = function() {
+        if (bivIdx >= bivFrames.length - 1) { bivStopPlay(); return; }
+        bivStep(1);
+        var spd = parseInt(document.getElementById('biv-speed').value) || 3;
+        var delay = [900, 650, 400, 220, 100][spd - 1];
+        bivTimer = setTimeout(go, delay);
+      };
+      bivTimer = setTimeout(go, 100);
+    }
+  }
+
+  function bivStopPlay() {
+    if (bivTimer) { clearTimeout(bivTimer); bivTimer = null; }
+    var btn = document.getElementById('biv-btn-play');
+    if (btn) { btn.textContent = '▶ Play'; btn.style.color = '#34d399'; }
+  }
+
+  function bivUpdateControls() {
+    document.getElementById('biv-btn-back').disabled = bivIdx === 0;
+    document.getElementById('biv-btn-fwd').disabled = bivIdx === bivFrames.length - 1;
+    var elCnt = document.getElementById('biv-step-counter');
+    if (elCnt) elCnt.textContent = (bivIdx + 1) + ' / ' + bivFrames.length;
+  }
+
+  // ── PROBLEM SELECTOR ───────────────────────────────────────────────────────
+  window.bivSelectProblem = function(problem, tabEl) {
+    bivProblem = problem;
+    bivStopPlay();
+    // Update tabs
+    document.querySelectorAll('.biv-tab').forEach(function(t){ t.classList.remove('active'); });
+    if (tabEl) tabEl.classList.add('active');
+    // Show/hide inputs
+    var targetRow = document.getElementById('biv-target-row');
+    var wordRow   = document.getElementById('biv-word-row');
+    var arrInput  = document.getElementById('biv-arr-input');
+    if (targetRow) targetRow.style.display = problem === 'combsum' ? 'flex' : 'none';
+    if (wordRow)   wordRow.style.display   = problem === 'wordsearch' ? 'flex' : 'none';
+    if (arrInput)  arrInput.parentElement.style.display = problem === 'wordsearch' ? 'none' : 'flex';
+    bivRebuild();
+  };
+
+  window.bivRebuild = function() { bivRebuild(); };
+  window.bivStep    = bivStep;
+  window.bivTogglePlay = bivTogglePlay;
+  window.bivReset   = bivReset;
+
+  // ── AUTO-INIT ─────────────────────────────────────────────────────────────
+  var bivObs = new MutationObserver(function() {
+    var root = document.getElementById('biv-root');
+    if (root && !root.dataset.bivInit) {
+      root.dataset.bivInit = '1';
+      bivRebuild();
+    }
+  });
+  bivObs.observe(document.body, { childList: true, subtree: true });
+
 })();
 </script>
 </body>
