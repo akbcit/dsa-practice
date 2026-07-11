@@ -2805,9 +2805,9 @@ buildSidebar(CONCEPTS);
     var p = bivPatterns[bivProblem];
     if (!p) { el.innerHTML = ''; return; }
     el.innerHTML = p.rows.map(function(row) {
-      return '<div style="display:grid;grid-template-columns:90px 1fr;gap:6px;padding:4px 0;border-bottom:1px solid #1e293b">'
-        + '<span style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;padding-top:1px">' + row.label + '</span>'
-        + '<span style="color:' + row.color + ';font-size:12px">' + row.value + '</span>'
+      return '<div style="padding:5px 0;border-bottom:1px solid #1e293b">'
+        + '<div style="color:#64748b;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px">' + row.label + '</div>'
+        + '<div style="color:' + row.color + ';font-size:12px;word-break:break-word;line-height:1.5">' + row.value + '</div>'
         + '</div>';
     }).join('');
   }
