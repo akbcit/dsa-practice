@@ -3038,6 +3038,14 @@ buildSidebar(CONCEPTS);
         action: 'dfs(start=' + start + ', rem=' + remaining + ') — current=[' + current.join(',') + ']'
       });
 
+      // check remaining == 0 (line 1)
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 1,
+        action: 'Check: remaining(' + remaining + ') == 0? ' + (remaining === 0 ? '✓ YES' : '✗ NO')
+      });
+
       if (remaining === 0) {
         nodes[id].leaf = true; nodes[id].label = 'FOUND';
         var snap = current.slice();
@@ -3050,14 +3058,17 @@ buildSidebar(CONCEPTS);
         });
         return;
       }
+
+      // check remaining < 0 (line 5)
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 5,
+        action: 'Check: remaining(' + remaining + ') < 0? ' + (remaining < 0 ? '✓ YES → prune' : '✗ NO → continue')
+      });
+
       if (remaining < 0) {
         nodes[id].leaf = true; nodes[id].label = 'PRUNE';
-        pushFrame(frames, 'tree', {
-          activeNode: id, nodes: nodes, edges: edges,
-          current: current, results: results, stack: myStack,
-          aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 5,
-          action: 'PRUNE — remaining<0, backtrack'
-        });
         return;
       }
 
@@ -3119,6 +3130,14 @@ buildSidebar(CONCEPTS);
         current: current, results: results, stack: myStack,
         aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 0,
         action: 'dfs(depth=' + depth + ') — current=[' + current.join(',') + '] used=' + ustr
+      });
+
+      // check base case (line 1)
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 1,
+        action: 'Check: current.Count(' + current.length + ') == nums.Length(' + numsArr.length + ')? ' + (current.length === numsArr.length ? '✓ YES' : '✗ NO')
       });
 
       if (current.length === numsArr.length) {
