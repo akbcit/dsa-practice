@@ -2178,7 +2178,7 @@ result.Add(new List<int>(current));  // ✓ copy
 </div>
 
 <!-- 3-column: State | Tree | Code -->
-<div style="display:grid;grid-template-columns:220px 1fr 260px;gap:14px;align-items:start">
+<div style="display:grid;grid-template-columns:220px 1fr 300px;gap:14px;align-items:start">
 
   <!-- LEFT: State -->
   <div>
@@ -3530,18 +3530,36 @@ buildSidebar(CONCEPTS);
   }
 
   // ── CODE PANEL ─────────────────────────────────────────────────────────────
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function syntaxHL(raw) {
+    var s = escHtml(raw);
+    // comments
+    s = s.replace(/(\/\/[^\n]*)/g, '<span style="color:#64748b;font-style:italic">$1</span>');
+    // keywords
+    s = s.replace(/\b(void|if|return|for|int|bool|var|new|true|false|continue)\b/g,
+      '<span style="color:#c084fc;font-weight:600">$1</span>');
+    // types
+    s = s.replace(/\b(List|IList|Length|Count|Add|RemoveAt|Join)\b/g,
+      '<span style="color:#67e8f9">$1</span>');
+    // numbers
+    s = s.replace(/\b(\d+)\b/g, '<span style="color:#fb923c">$1</span>');
+    // parens & brackets — bright so they pop
+    s = s.replace(/([()[\]{}])/g, '<span style="color:#f1f5f9;font-weight:700">$1</span>');
+    return s;
+  }
+
   function bivRenderCode(activeLine) {
     var panel = document.getElementById('biv-code-panel');
     if (!panel) return;
     var lines = bivCodes[bivProblem] || [];
     panel.innerHTML = lines.map(function(line, i) {
       var cls = 'biv-code-line' + (i === activeLine ? ' active' : '');
-      return '<div class="' + cls + '">' + escHtml(line) + '</div>';
+      var num = '<span style="color:#374151;user-select:none;margin-right:12px;font-size:11px">' + (i + 1) + '</span>';
+      return '<div class="' + cls + '">' + num + syntaxHL(line) + '</div>';
     }).join('');
-  }
-
-  function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   // ── CONTROLS ───────────────────────────────────────────────────────────────
