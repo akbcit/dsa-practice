@@ -2973,6 +2973,12 @@ buildSidebar(CONCEPTS);
         action: 'Skip nums[' + i + ']=' + numsArr[i] + ' → dfs(' + (i+1) + ')'
       });
       dfs(i + 1, depth + 1, id, x, 0, 2, myStack);
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: auxStr, auxLabel: 'index', codeLine: 6,
+        action: '↑ Returned to dfs(' + i + ') — now try include branch'
+      });
 
       // include (lines 8–9)
       current.push(numsArr[i]);
@@ -2989,6 +2995,12 @@ buildSidebar(CONCEPTS);
         action: 'Recurse → dfs(' + (i+1) + ')'
       });
       dfs(i + 1, depth + 1, id, x, 1, 2, myStack);
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: auxStr, auxLabel: 'index', codeLine: 9,
+        action: '↑ Returned to dfs(' + i + ') — now backtrack'
+      });
 
       // backtrack (line 10)
       current.pop();
@@ -3092,9 +3104,15 @@ buildSidebar(CONCEPTS);
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
           aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 8,
-          action: 'Recurse → dfs(i=' + i + ', rem=' + (remaining - candidates[i]) + ')'
+          action: '↓ Recurse → dfs(i=' + i + ', rem=' + (remaining - candidates[i]) + ') — pausing this frame'
         });
         dfs(i, remaining - candidates[i], depth + 1, id, x, i - start, candidates.length - start, myStack);
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 8,
+          action: '↑ Returned to dfs(start=' + start + ', rem=' + remaining + ') — resuming for loop'
+        });
         current.pop();
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
@@ -3191,6 +3209,12 @@ buildSidebar(CONCEPTS);
           action: 'Recurse → dfs() with current=[' + current.join(',') + ']'
         });
         dfs(depth + 1, id, x, bi, availCount, myStack);
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 9,
+          action: '↑ Returned to dfs(depth=' + depth + ') — now backtrack nums[' + i + ']=' + numsArr[i]
+        });
         current.pop();
         used[i] = false;
         pushFrame(frames, 'tree', {
