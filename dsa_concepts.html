@@ -2201,6 +2201,14 @@ result.Add(new List<int>(current));  // ✓ copy
         <div id="biv-state-stack" style="font-size:11px;font-family:'JetBrains Mono',monospace;line-height:2;max-height:120px;overflow-y:auto"></div>
       </div>
     </div>
+
+    <!-- Pattern reference card -->
+    <div style="margin-top:12px">
+      <div class="biv-section-title">DFS Pattern</div>
+      <div class="biv-panel" style="padding:12px;font-size:12px;font-family:'JetBrains Mono',monospace">
+        <div id="biv-pattern-table"></div>
+      </div>
+    </div>
   </div>
 
   <!-- CENTER: Tree + action + controls -->
@@ -2737,7 +2745,72 @@ buildSidebar(CONCEPTS);
   var bivFrames  = [];
   var bivIdx     = 0;
   var bivTimer   = null;
-  var bivCodes   = {};
+  var bivCodes    = {};
+
+  // ── DFS pattern reference per problem ───────────────────────────────────────
+  var bivPatterns = {
+    subsets: {
+      rows: [
+        { label: 'Stop when',    value: 'i >= nums.Length',          color: '#f87171' },
+        { label: 'On stop',      value: 'save snapshot of current',  color: '#6ee7b7' },
+        { label: 'Choices',      value: 'skip  OR  include nums[i]', color: '#c4b5fd' },
+        { label: 'Skip',         value: 'dfs(i + 1)  — no change',   color: '#7dd3fc' },
+        { label: 'Include',      value: 'Add(nums[i]) → dfs(i + 1)', color: '#7dd3fc' },
+        { label: 'Backtrack',    value: 'RemoveAt(last)',             color: '#fde68a' },
+        { label: 'Key insight',  value: 'every element = in OR out', color: '#94a3b8' },
+      ]
+    },
+    combsum: {
+      rows: [
+        { label: 'Stop when',    value: 'remaining == 0  → save',    color: '#6ee7b7' },
+        { label: 'Prune when',   value: 'remaining < 0  → stop',     color: '#f87171' },
+        { label: 'Prune when',   value: 'i >= candidates.Length',     color: '#f87171' },
+        { label: 'Choices',      value: 'skip  OR  include again',    color: '#c4b5fd' },
+        { label: 'Skip',         value: 'dfs(i + 1, same rem)',       color: '#7dd3fc' },
+        { label: 'Include',      value: 'Add(c[i]) → dfs(i, rem-c[i])', color: '#7dd3fc' },
+        { label: 'Backtrack',    value: 'RemoveAt(last)',             color: '#fde68a' },
+        { label: 'Key insight',  value: 'stay at i to reuse element', color: '#94a3b8' },
+      ]
+    },
+    perms: {
+      rows: [
+        { label: 'Stop when',    value: 'current.Count == nums.Length', color: '#6ee7b7' },
+        { label: 'On stop',      value: 'save snapshot of current',    color: '#6ee7b7' },
+        { label: 'Choices',      value: 'any unused element',          color: '#c4b5fd' },
+        { label: 'Guard',        value: 'if used[i] → skip',           color: '#f87171' },
+        { label: 'Pick',         value: 'Add(nums[i]), used[i]=true',  color: '#7dd3fc' },
+        { label: 'Recurse',      value: 'dfs()  — no index needed',    color: '#7dd3fc' },
+        { label: 'Backtrack',    value: 'RemoveAt(last), used[i]=false', color: '#fde68a' },
+        { label: 'Key insight',  value: 'loop ALL elements every call', color: '#94a3b8' },
+      ]
+    },
+    wordsearch: {
+      rows: [
+        { label: 'Stop when',    value: 'out of bounds  → false',      color: '#f87171' },
+        { label: 'Stop when',    value: 'used[r,c]  → false',          color: '#f87171' },
+        { label: 'Stop when',    value: 'board[r][c] ≠ word[i]  → false', color: '#f87171' },
+        { label: 'Found when',   value: 'i == word.Length - 1  → true', color: '#6ee7b7' },
+        { label: 'Choices',      value: 'up / down / left / right',    color: '#c4b5fd' },
+        { label: 'Mark',         value: 'used[r,c] = true',            color: '#7dd3fc' },
+        { label: 'Recurse',      value: 'dfs(r±1 or c±1, i+1)',        color: '#7dd3fc' },
+        { label: 'Backtrack',    value: 'used[r,c] = false',           color: '#fde68a' },
+        { label: 'Key insight',  value: 'start fresh from every cell', color: '#94a3b8' },
+      ]
+    }
+  };
+
+  function bivRenderPattern() {
+    var el = document.getElementById('biv-pattern-table');
+    if (!el) return;
+    var p = bivPatterns[bivProblem];
+    if (!p) { el.innerHTML = ''; return; }
+    el.innerHTML = p.rows.map(function(row) {
+      return '<div style="display:grid;grid-template-columns:90px 1fr;gap:6px;padding:4px 0;border-bottom:1px solid #1e293b">'
+        + '<span style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.8px;padding-top:1px">' + row.label + '</span>'
+        + '<span style="color:' + row.color + ';font-size:12px">' + row.value + '</span>'
+        + '</div>';
+    }).join('');
+  }
 
   // ── C# code for each problem ────────────────────────────────────────────────
   bivCodes.subsets = [
@@ -3618,6 +3691,7 @@ buildSidebar(CONCEPTS);
     if (wordRow)   wordRow.style.display   = problem === 'wordsearch' ? 'flex' : 'none';
     if (arrInput)  arrInput.parentElement.style.display = problem === 'wordsearch' ? 'none' : 'flex';
     bivRebuild();
+    bivRenderPattern();
   };
 
   window.bivRebuild = function() { bivRebuild(); };
@@ -3631,6 +3705,7 @@ buildSidebar(CONCEPTS);
     if (root && !root.dataset.bivInit) {
       root.dataset.bivInit = '1';
       bivRebuild();
+      bivRenderPattern();
     }
   });
   bivObs.observe(document.body, { childList: true, subtree: true });
