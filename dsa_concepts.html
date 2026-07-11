@@ -2458,7 +2458,28 @@ function selectConcept(id) {
 
   placeholder.classList.add("hidden");
   content.classList.remove("hidden");
-  content.innerHTML = marked.parse(concept.content);
+
+  // Raw HTML concepts (start with <) need direct injection + script re-execution
+  if (concept.content.trimStart().startsWith('<')) {
+    content.innerHTML = concept.content;
+    // Re-execute any <script> blocks (innerHTML doesn't run them)
+    content.querySelectorAll('script').forEach(old => {
+      const s = document.createElement('script');
+      if (old.src) { s.src = old.src; } else { s.textContent = old.textContent; }
+      document.head.appendChild(s);
+      old.remove();
+    });
+    // Move <style> blocks to head so they aren't stripped
+    content.querySelectorAll('style').forEach(old => {
+      const s = document.createElement('style');
+      s.textContent = old.textContent;
+      document.head.appendChild(s);
+      old.remove();
+    });
+  } else {
+    content.innerHTML = marked.parse(concept.content);
+  }
+
   document.getElementById("main").scrollTop = 0;
 }
 
