@@ -30,10 +30,13 @@ function getTargetFramework() {
 
 // Create a persistent project once — much faster than recreating each time
 function ensureProject() {
-  if (fs.existsSync(path.join(PROJECT_DIR, 'app.csproj'))) return;
-  fs.mkdirSync(PROJECT_DIR, { recursive: true });
-  const tf = getTargetFramework();
-  fs.writeFileSync(path.join(PROJECT_DIR, 'app.csproj'),
+  const csprojPath = path.join(PROJECT_DIR, 'app.csproj');
+  const assetsPath = path.join(PROJECT_DIR, 'obj', 'project.assets.json');
+
+  if (!fs.existsSync(csprojPath)) {
+    fs.mkdirSync(PROJECT_DIR, { recursive: true });
+    const tf = getTargetFramework();
+    fs.writeFileSync(csprojPath,
 `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -43,8 +46,14 @@ function ensureProject() {
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 </Project>`);
-  console.log(`Created project (${tf}), restoring packages...`);
-  execSync('dotnet restore', { cwd: PROJECT_DIR, windowsHide: true });
+    console.log(`Created project (${tf}), restoring packages...`);
+  }
+
+  if (!fs.existsSync(assetsPath)) {
+    console.log('Restoring packages...');
+    execSync('dotnet restore', { cwd: PROJECT_DIR, windowsHide: true });
+  }
+
   console.log('Ready.');
 }
 
@@ -57,6 +66,12 @@ function killTree(pid) {
 function executeCode(code) {
   // Kill any previous run still holding file locks
   if (currentRun) { killTree(currentRun.pid); currentRun = null; }
+
+  // Re-restore if assets were wiped (e.g. Windows temp cleanup mid-session)
+  const assetsPath = path.join(PROJECT_DIR, 'obj', 'project.assets.json');
+  if (!fs.existsSync(assetsPath)) {
+    try { execSync('dotnet restore', { cwd: PROJECT_DIR, windowsHide: true }); } catch {}
+  }
 
   return new Promise((resolve) => {
     fs.writeFileSync(path.join(PROJECT_DIR, 'Program.cs'), code, 'utf8');

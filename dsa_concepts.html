@@ -1908,6 +1908,214 @@ return heap.Count;
 | Sort by end | greedy removal (LC 435) |
 | Min-heap of ends | counting rooms (LC 253) |
 `
+  },
+  {
+    id: "backtracking",
+    name: "Backtracking",
+    icon: "🌿",
+    category: "Algorithms",
+    tag: "algo",
+    content: `## Backtracking
+
+### What is backtracking?
+
+Backtracking is **DFS on a decision tree you never explicitly build**.
+
+At each step you make a choice, go deeper, and when you've exhausted that path you **undo** the choice and try the next one. The call stack silently tracks your position in the tree.
+
+---
+
+### The universal template
+
+\`\`\`
+dfs(state):
+  if base case:
+    record result
+    return
+
+  for each choice:
+    make choice       ← add to current
+    dfs(next state)   ← go deeper
+    undo choice       ← remove from current  ← THIS IS THE BACKTRACK
+\`\`\`
+
+The **undo** is what makes it backtracking. Without it, every branch shares corrupted state.
+
+---
+
+### LC 78 — Subsets (the clearest example)
+
+**Problem:** given \`[1,2,3]\`, return all possible subsets.
+
+Every element has exactly two choices: **include** or **skip**. That binary decision for each element forms a tree:
+
+\`\`\`
+                    []
+              /           \\
+           []              [1]
+          /    \\          /    \\
+        []    [2]      [1]    [1,2]
+        / \\   / \\      / \\    /   \\
+      [] [3][2][2,3] [1][1,3][1,2][1,2,3]
+\`\`\`
+
+8 leaves = 8 subsets = 2³.
+
+---
+
+### The code — read this first
+
+\`\`\`csharp
+public IList<IList<int>> Subsets(int[] nums) {
+    var result  = new List<IList<int>>();
+    var current = new List<int>();
+
+    void dfs(int i) {
+
+        // ─── BASE CASE ────────────────────────────────────────────────────
+        if (i == nums.Length) {
+            result.Add(new List<int>(current)); // copy current — don't store the reference
+            return;
+        }
+
+        // ─── ATTEMPT 1: skip nums[i] ─────────────────────────────────────
+        // Don't touch current. Just recurse and explore the skip subtree.
+        dfs(i + 1);
+
+        // ─── ATTEMPT 2: include nums[i] ──────────────────────────────────
+        current.Add(nums[i]);   // open bracket  — add to end of current
+        dfs(i + 1);             //               — explore the include subtree
+        current.RemoveAt(current.Count - 1); // close bracket — undo the Add above
+        // (Count-1 = last index, because Add always goes to the end)
+        // After this line, current is exactly what it was before ATTEMPT 2.
+        // The caller gets it back clean.
+    }
+
+    dfs(0);
+    return result;
+}
+\`\`\`
+
+---
+
+### The call stack IS the data structure
+
+You don't build this tree in memory. The recursion simulates it. **Stack depth = index i.** \`current[]\` just makes the path visible — it grows as you go deeper, shrinks as frames pop.
+
+When \`dfs(2)\` returns, \`dfs(1)\` resumes exactly where it left off and tries the other branch.
+
+---
+
+### Full call stack trace on [1,2,3]
+
+\`\`\`
+CALL dfs(0)  current=[]
+  CALL dfs(1)  current=[]          stack: [dfs(0), dfs(1)]
+    CALL dfs(2)  current=[]        stack: [dfs(0), dfs(1), dfs(2)]
+      CALL dfs(3)  current=[]      stack: [dfs(0), dfs(1), dfs(2), dfs(3)]
+        BASE → record []
+      RETURN dfs(3)                stack: [dfs(0), dfs(1), dfs(2)]
+      push(3) → current=[3]
+      CALL dfs(3)  current=[3]     stack: [dfs(0), dfs(1), dfs(2), dfs(3)]
+        BASE → record [3]
+      RETURN dfs(3)                stack: [dfs(0), dfs(1), dfs(2)]
+      pop() → current=[]
+    RETURN dfs(2)                  stack: [dfs(0), dfs(1)]
+    push(2) → current=[2]
+    CALL dfs(2)  current=[2]       stack: [dfs(0), dfs(1), dfs(2)]
+      CALL dfs(3)  current=[2]     stack: [dfs(0), dfs(1), dfs(2), dfs(3)]
+        BASE → record [2]
+      RETURN dfs(3)                stack: [dfs(0), dfs(1), dfs(2)]
+      push(3) → current=[2,3]
+      CALL dfs(3)  current=[2,3]   stack: [dfs(0), dfs(1), dfs(2), dfs(3)]
+        BASE → record [2,3]
+      RETURN dfs(3)                stack: [dfs(0), dfs(1), dfs(2)]
+      pop() → current=[2]
+    RETURN dfs(2)                  stack: [dfs(0), dfs(1)]
+    pop() → current=[]
+  RETURN dfs(1)                    stack: [dfs(0)]
+  push(1) → current=[1]
+  CALL dfs(1)  current=[1]         stack: [dfs(0), dfs(1)]
+    CALL dfs(2)  current=[1]       stack: [dfs(0), dfs(1), dfs(2)]
+      CALL dfs(3)  current=[1]     stack: [dfs(0), dfs(1), dfs(2), dfs(3)]
+        BASE → record [1]
+      RETURN dfs(3)                stack: [dfs(0), dfs(1), dfs(2)]
+      push(3) → current=[1,3]
+      CALL dfs(3)  current=[1,3]   stack: [dfs(0), dfs(1), dfs(2), dfs(3)]
+        BASE → record [1,3]
+      RETURN dfs(3)                stack: [dfs(0), dfs(1), dfs(2)]
+      pop() → current=[1]
+    RETURN dfs(2)                  stack: [dfs(0), dfs(1)]
+    push(2) → current=[1,2]
+    CALL dfs(2)  current=[1,2]     stack: [dfs(0), dfs(1), dfs(2)]
+      CALL dfs(3)  current=[1,2]   stack: [dfs(0), dfs(1), dfs(2), dfs(3)]
+        BASE → record [1,2]
+      RETURN dfs(3)                stack: [dfs(0), dfs(1), dfs(2)]
+      push(3) → current=[1,2,3]
+      CALL dfs(3)  current=[1,2,3] stack: [dfs(0), dfs(1), dfs(2), dfs(3)]
+        BASE → record [1,2,3]
+      RETURN dfs(3)                stack: [dfs(0), dfs(1), dfs(2)]
+      pop() → current=[1,2]
+    RETURN dfs(2)                  stack: [dfs(0), dfs(1)]
+    pop() → current=[1]
+  RETURN dfs(1)                    stack: [dfs(0)]
+  pop() → current=[]
+\`\`\`
+
+Result: \`[], [3], [2], [2,3], [1], [1,3], [1,2], [1,2,3]\`
+
+\`[]\` recorded exactly **once** — the first path where you skipped everything.
+
+---
+
+### The snapshot problem
+
+\`current\` keeps changing as you push/pop. \`result.Add(current)\` stores a **reference** — when \`current\` changes later, your stored entry changes too.
+
+Always copy at the moment you record:
+
+\`\`\`csharp
+result.Add(new List<int>(current));  // ✓ copy
+\`\`\`
+
+---
+
+### Complexity
+
+| | |
+|---|---|
+| Time | O(n × 2ⁿ) — 2ⁿ subsets, each costs O(n) to copy |
+| Space | O(n) — recursion depth only, not counting output |
+
+---
+
+### Step-through visualizer
+
+<div id="btv-wrap" style="background:#12121a;border:1px solid #2e2e38;border-radius:12px;padding:18px;margin:20px 0;font-family:'JetBrains Mono',monospace">
+  <div style="text-align:center;font-size:10px;color:#71717a;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:12px">Interactive — Subsets([1, 2, 3]) &nbsp;·&nbsp; click Next to step through</div>
+  <svg id="btv-svg" viewBox="0 0 680 315" style="width:100%;max-width:680px;display:block;margin:0 auto"></svg>
+  <div id="btv-action-display" style="text-align:center;font-size:12px;color:#fbbf24;min-height:20px;margin-top:14px;padding:0 8px"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:12px">
+    <div>
+      <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Call Stack</div>
+      <div id="btv-stack-display" style="font-size:11px;line-height:1.9"></div>
+    </div>
+    <div>
+      <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">current[]</div>
+      <div id="btv-cur-display" style="font-size:16px;color:#34d399;font-weight:700;letter-spacing:0.5px"></div>
+    </div>
+    <div>
+      <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Results recorded</div>
+      <div id="btv-res-display" style="font-size:11px;line-height:1.9"></div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:12px">
+    <button onclick="btvStep(-1)" style="background:#1e1e2a;border:1px solid #3f3f52;color:#a78bfa;font-size:12px;font-family:'JetBrains Mono',monospace;padding:7px 18px;border-radius:7px;cursor:pointer">← Prev</button>
+    <span id="btv-num-display" style="color:#71717a;font-size:12px;min-width:90px;text-align:center">Step 1 / 15</span>
+    <button onclick="btvStep(1)" style="background:#1e1e2a;border:1px solid #3f3f52;color:#a78bfa;font-size:12px;font-family:'JetBrains Mono',monospace;padding:7px 18px;border-radius:7px;cursor:pointer">Next →</button>
+  </div>
+</div>
+`
   }
 ];
 
@@ -1996,6 +2204,200 @@ document.addEventListener("keydown", e => {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 buildSidebar(CONCEPTS);
+</script>
+<script>
+// ── BACKTRACKING STEP-THROUGH VISUALIZER ─────────────────────────────────────
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var C = { bg:'#12121a', dim:'#1a1a2a', border:'#2e2e38', muted:'#3f3f52',
+            text:'#7070a0', accent:'#a78bfa', green:'#34d399', yellow:'#fbbf24',
+            pathbg:'#16122a', activebg:'#1f1a08' };
+
+  var NP = {
+    n0:  {x:340,y:32, r:22, lbl:'i=0', sub:'[]'},
+    n1l: {x:170,y:112,r:18, lbl:'i=1', sub:'[]'},
+    n1r: {x:510,y:112,r:18, lbl:'i=1', sub:'[1]'},
+    n2ll:{x:85, y:190,r:15, lbl:'i=2', sub:'[]'},
+    n2lr:{x:255,y:190,r:15, lbl:'i=2', sub:'[2]'},
+    n2rl:{x:425,y:190,r:15, lbl:'i=2', sub:'[1]'},
+    n2rr:{x:595,y:190,r:15, lbl:'i=2', sub:'[1,2]'},
+    f0:  {x:42, y:272,r:12, lbl:'BASE',sub:'[]',    leaf:true},
+    f1:  {x:127,y:272,r:12, lbl:'BASE',sub:'[3]',   leaf:true},
+    f2:  {x:212,y:272,r:12, lbl:'BASE',sub:'[2]',   leaf:true},
+    f3:  {x:297,y:272,r:12, lbl:'BASE',sub:'[2,3]', leaf:true},
+    f4:  {x:382,y:272,r:12, lbl:'BASE',sub:'[1]',   leaf:true},
+    f5:  {x:467,y:272,r:12, lbl:'BASE',sub:'[1,3]', leaf:true},
+    f6:  {x:552,y:272,r:12, lbl:'BASE',sub:'[1,2]', leaf:true},
+    f7:  {x:637,y:272,r:12, lbl:'BASE',sub:'[1,2,3]',leaf:true}
+  };
+
+  var EDGES = [
+    ['n0','n1l','skip 1',false],['n0','n1r','+1',true],
+    ['n1l','n2ll','skip 2',false],['n1l','n2lr','+2',true],
+    ['n1r','n2rl','skip 2',false],['n1r','n2rr','+2',true],
+    ['n2ll','f0','skip',false],['n2ll','f1','+3',true],
+    ['n2lr','f2','skip',false],['n2lr','f3','+3',true],
+    ['n2rl','f4','skip',false],['n2rl','f5','+3',true],
+    ['n2rr','f6','skip',false],['n2rr','f7','+3',true]
+  ];
+
+  var PAR = {n1l:'n0',n1r:'n0',n2ll:'n1l',n2lr:'n1l',n2rl:'n1r',n2rr:'n1r',
+             f0:'n2ll',f1:'n2ll',f2:'n2lr',f3:'n2lr',f4:'n2rl',f5:'n2rl',f6:'n2rr',f7:'n2rr'};
+
+  var STEPS = [
+    {nd:'n0',  stk:['dfs(0)'],                              cur:'[]',      act:'Start — i=0. Will we include nums[0]=1?',              rec:null},
+    {nd:'n1l', stk:['dfs(0)','dfs(1)'],                    cur:'[]',      act:'① Skip 1 — call dfs(1) without touching current',      rec:null},
+    {nd:'n2ll',stk:['dfs(0)','dfs(1)','dfs(2)'],           cur:'[]',      act:'① Skip 2 — call dfs(2) without touching current',      rec:null},
+    {nd:'f0',  stk:['dfs(0)','dfs(1)','dfs(2)','dfs(3)'],  cur:'[]',      act:'① Skip 3 → i==3 BASE CASE → record snapshot []',      rec:'[]'},
+    {nd:'f1',  stk:['dfs(0)','dfs(1)','dfs(2)','dfs(3)'],  cur:'[3]',     act:'② push(3) → include 3 → BASE CASE → record [3]',      rec:'[3]'},
+    {nd:'n2lr',stk:['dfs(0)','dfs(1)','dfs(2)'],           cur:'[2]',     act:'③ pop(3) UNDO · ② push(2) include 2 → call dfs(2)',   rec:null},
+    {nd:'f2',  stk:['dfs(0)','dfs(1)','dfs(2)','dfs(3)'],  cur:'[2]',     act:'① Skip 3 → BASE CASE → record [2]',                   rec:'[2]'},
+    {nd:'f3',  stk:['dfs(0)','dfs(1)','dfs(2)','dfs(3)'],  cur:'[2,3]',   act:'② push(3) → include 3 → BASE CASE → record [2,3]',    rec:'[2,3]'},
+    {nd:'n1r', stk:['dfs(0)','dfs(1)'],                    cur:'[1]',     act:'③ pop(3) UNDO · pop(2) UNDO · ② push(1) include 1',   rec:null},
+    {nd:'n2rl',stk:['dfs(0)','dfs(1)','dfs(2)'],           cur:'[1]',     act:'① Skip 2 — call dfs(2) without touching current',      rec:null},
+    {nd:'f4',  stk:['dfs(0)','dfs(1)','dfs(2)','dfs(3)'],  cur:'[1]',     act:'① Skip 3 → BASE CASE → record [1]',                   rec:'[1]'},
+    {nd:'f5',  stk:['dfs(0)','dfs(1)','dfs(2)','dfs(3)'],  cur:'[1,3]',   act:'② push(3) → include 3 → BASE CASE → record [1,3]',    rec:'[1,3]'},
+    {nd:'n2rr',stk:['dfs(0)','dfs(1)','dfs(2)'],           cur:'[1,2]',   act:'③ pop(3) UNDO · ② push(2) include 2 → call dfs(2)',   rec:null},
+    {nd:'f6',  stk:['dfs(0)','dfs(1)','dfs(2)','dfs(3)'],  cur:'[1,2]',   act:'① Skip 3 → BASE CASE → record [1,2]',                 rec:'[1,2]'},
+    {nd:'f7',  stk:['dfs(0)','dfs(1)','dfs(2)','dfs(3)'],  cur:'[1,2,3]', act:'② push(3) → include 3 → BASE CASE → record [1,2,3]',  rec:'[1,2,3]'}
+  ];
+
+  var _step = 0;
+
+  function mk(tag, attrs, txt) {
+    var el = document.createElementNS(NS, tag);
+    if (attrs) { for (var k in attrs) el.setAttribute(k, String(attrs[k])); }
+    if (txt !== undefined) el.textContent = txt;
+    return el;
+  }
+
+  function pathSet(nodeId) {
+    var s = {}; var n = nodeId;
+    while (n) { s[n] = true; n = PAR[n]; }
+    return s;
+  }
+
+  function draw(svg) {
+    svg.innerHTML = '';
+    // Level labels
+    var levels = [[32,'i=0'],[112,'i=1'],[190,'i=2'],[272,'i=3 → BASE']];
+    for (var li = 0; li < levels.length; li++) {
+      svg.appendChild(mk('text',{x:4,y:levels[li][0]+4,'font-size':8,fill:C.muted,'font-family':'Inter,sans-serif','font-weight':'700'},levels[li][1]));
+    }
+    // Edges
+    for (var ei = 0; ei < EDGES.length; ei++) {
+      var e = EDGES[ei]; var fp = NP[e[0]]; var tp = NP[e[1]]; var isR = e[3];
+      svg.appendChild(mk('line',{x1:fp.x,y1:fp.y,x2:tp.x,y2:tp.y,stroke:C.border,'stroke-width':1.5,id:'btv-e-'+e[0]+'-'+e[1]}));
+      var mx = (fp.x+tp.x)/2; var my = (fp.y+tp.y)/2;
+      var ox = isR ? 14 : -14;
+      svg.appendChild(mk('text',{x:mx+ox,y:my+3,'font-size':8,fill:C.muted,'font-family':'JetBrains Mono,monospace','text-anchor':'middle',id:'btv-el-'+e[0]+'-'+e[1]},e[2]));
+    }
+    // Nodes
+    var ids = Object.keys(NP);
+    for (var ni = 0; ni < ids.length; ni++) {
+      var id = ids[ni]; var p = NP[id];
+      var g = mk('g',{id:'btv-g-'+id});
+      g.appendChild(mk('circle',{cx:p.x,cy:p.y,r:p.r,fill:C.bg,stroke:C.border,'stroke-width':1.5,id:'btv-c-'+id}));
+      g.appendChild(mk('text',{x:p.x,y:p.y+3,'font-size':p.leaf?7:8,'font-family':'JetBrains Mono,monospace',fill:C.muted,'text-anchor':'middle',id:'btv-il-'+id},p.lbl));
+      g.appendChild(mk('text',{x:p.x,y:p.y+p.r+11,'font-size':p.leaf?9:8,'font-family':'JetBrains Mono,monospace',fill:p.leaf?'#4a4a62':C.text,'text-anchor':'middle','font-weight':p.leaf?'600':'400',id:'btv-sl-'+id},p.sub));
+      svg.appendChild(g);
+    }
+  }
+
+  function render() {
+    var svg = document.getElementById('btv-svg');
+    if (!svg) return;
+    if (!svg.children.length) draw(svg);
+
+    var s = STEPS[_step];
+    var path = pathSet(s.nd);
+
+    // Compute recorded leaves up to this step
+    var recLeaves = {};
+    for (var i = 0; i <= _step; i++) {
+      if (STEPS[i].rec !== null) recLeaves[STEPS[i].nd] = true;
+    }
+
+    // Build active edge set
+    var activeEdges = {};
+    var nn = s.nd;
+    while (PAR[nn]) { activeEdges[PAR[nn]+'-'+nn] = true; nn = PAR[nn]; }
+
+    // Update edges
+    for (var ei = 0; ei < EDGES.length; ei++) {
+      var e = EDGES[ei]; var key = e[0]+'-'+e[1];
+      var el = document.getElementById('btv-e-'+key);
+      if (!el) continue;
+      var on = activeEdges[key];
+      el.setAttribute('stroke', on ? C.accent : C.border);
+      el.setAttribute('stroke-width', on ? 2 : 1.5);
+      el.setAttribute('stroke-opacity', on ? '1' : '0.5');
+      var lbl = document.getElementById('btv-el-'+key);
+      if (lbl) lbl.setAttribute('fill', on ? C.accent : C.muted);
+    }
+
+    // Update nodes
+    var ids = Object.keys(NP);
+    for (var ni = 0; ni < ids.length; ni++) {
+      var id = ids[ni]; var p = NP[id];
+      var circ = document.getElementById('btv-c-'+id);
+      var ilbl = document.getElementById('btv-il-'+id);
+      var slbl = document.getElementById('btv-sl-'+id);
+      if (!circ) continue;
+      var isActive = id === s.nd;
+      var isOnPath = path[id] && !isActive;
+      var isDoneLeaf = p.leaf && recLeaves[id] && !isActive;
+
+      circ.setAttribute('fill', isActive ? C.activebg : isDoneLeaf ? '#0a1f14' : isOnPath ? C.pathbg : C.bg);
+      circ.setAttribute('stroke', isActive ? C.yellow : isDoneLeaf ? C.green : isOnPath ? C.accent : C.border);
+      circ.setAttribute('stroke-width', isActive ? 3 : (isDoneLeaf || isOnPath) ? 2 : 1.5);
+      if (ilbl) ilbl.setAttribute('fill', isActive ? C.yellow : isDoneLeaf ? C.green : isOnPath ? C.accent : C.muted);
+      if (slbl) {
+        slbl.setAttribute('fill', isActive ? C.yellow : isDoneLeaf ? C.green : p.leaf ? '#4a4a62' : C.text);
+        slbl.setAttribute('font-weight', isActive ? '700' : isDoneLeaf ? '600' : '400');
+      }
+    }
+
+    // Info panel
+    var stackEl = document.getElementById('btv-stack-display');
+    var curEl   = document.getElementById('btv-cur-display');
+    var resEl   = document.getElementById('btv-res-display');
+    var actEl   = document.getElementById('btv-action-display');
+    var numEl   = document.getElementById('btv-num-display');
+
+    if (stackEl) {
+      var html = '';
+      for (var si = 0; si < s.stk.length; si++) {
+        var isTop = si === s.stk.length - 1;
+        html += '<div style="color:' + (isTop ? C.accent : '#505080') + ';padding-left:' + (si * 10) + 'px;font-size:11px">' + s.stk[si] + (isTop ? ' ←' : '') + '</div>';
+      }
+      stackEl.innerHTML = html;
+    }
+    if (curEl)  curEl.textContent  = s.cur;
+    if (actEl)  actEl.textContent  = s.act;
+    if (numEl)  numEl.textContent  = 'Step ' + (_step + 1) + ' / ' + STEPS.length;
+    if (resEl) {
+      var recs = [];
+      for (var ri = 0; ri <= _step; ri++) { if (STEPS[ri].rec !== null) recs.push(STEPS[ri].rec); }
+      resEl.innerHTML = recs.map(function(r){ return '<span style="color:' + C.green + '">' + r + '</span>'; }).join('  ');
+    }
+  }
+
+  window.btvStep = function (dir) {
+    var svg = document.getElementById('btv-svg');
+    if (!svg) return;
+    if (!svg.children.length) { _step = 0; draw(svg); }
+    _step = Math.max(0, Math.min(STEPS.length - 1, _step + dir));
+    render();
+  };
+
+  // Auto-init when element enters DOM
+  var obs = new MutationObserver(function () {
+    var svg = document.getElementById('btv-svg');
+    if (svg && !svg.children.length) { _step = 0; draw(svg); render(); }
+  });
+  obs.observe(document.body, {childList: true, subtree: true});
+})();
 </script>
 </body>
 </html>
