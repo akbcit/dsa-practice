@@ -2123,37 +2123,36 @@ result.Add(new List<int>(current));  // ✓ copy
     icon: "🎮",
     category: "Algorithms",
     tag: "algo",
-    content: `<div id="biv-root" style="font-family:'Inter',system-ui,sans-serif;background:#0c0c0f;color:#f0f0f5;padding:0 0 32px 0">
+    content: `<div id="biv-root" style="font-family:'Inter',system-ui,sans-serif;background:#111827;color:#e2e8f0;padding:0 0 32px 0">
 
 <style>
 #biv-root * { box-sizing: border-box; }
-.biv-tabs { display:flex; gap:6px; padding:16px 0 12px 0; flex-wrap:wrap; }
-.biv-tab { background:#18181f; border:1px solid #2e2e38; color:#71717a; padding:7px 16px; border-radius:8px; font-size:13px; font-family:'Inter',sans-serif; font-weight:500; cursor:pointer; transition:all 0.15s; }
-.biv-tab:hover { border-color:#8b5cf6; color:#a78bfa; }
-.biv-tab.active { background:#1a1030; border-color:#8b5cf6; color:#a78bfa; }
-.biv-section-title { font-size:10px; color:#71717a; letter-spacing:1.4px; text-transform:uppercase; margin-bottom:8px; }
-.biv-panel { background:#111116; border:1px solid #232329; border-radius:10px; padding:14px; }
-.biv-badge { display:inline-block; background:#1a1030; border:1px solid #4c1d95; color:#a78bfa; font-size:10px; padding:2px 8px; border-radius:12px; font-family:'JetBrains Mono',monospace; }
-.biv-badge-green { background:#0a1f14; border-color:#166534; color:#34d399; }
-.biv-badge-yellow { background:#1c1400; border-color:#854d0e; color:#fbbf24; }
-.biv-btn { background:#1e1e2a; border:1px solid #3f3f52; color:#a78bfa; font-size:12px; font-family:'JetBrains Mono',monospace; padding:8px 18px; border-radius:7px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
-.biv-btn:hover { background:#2a2040; border-color:#8b5cf6; }
-.biv-btn:disabled { opacity:0.35; cursor:not-allowed; }
-.biv-btn-green { color:#34d399; border-color:#166534; }
-.biv-btn-green:hover { background:#0a1f14; border-color:#22c55e; }
-.biv-grid { display:grid; gap:12px; }
-.biv-input { background:#18181f; border:1px solid #2e2e38; color:#f0f0f5; font-family:'JetBrains Mono',monospace; font-size:12px; padding:6px 10px; border-radius:6px; outline:none; }
-.biv-input:focus { border-color:#8b5cf6; }
-.biv-code-line { padding:2px 10px; font-size:11.5px; font-family:'JetBrains Mono',monospace; line-height:1.75; color:#71717a; border-left:2px solid transparent; }
-.biv-code-line.active { background:#1c1400; color:#fbbf24; border-left-color:#fbbf24; }
-.biv-code-line.dim { opacity:0.4; }
-.biv-app-card { background:#111116; border:1px solid #232329; border-radius:10px; padding:14px 16px; }
-.biv-app-card:hover { border-color:#2e2e38; }
-.biv-apps-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; margin-top:12px; }
+.biv-tabs { display:flex; gap:8px; padding:16px 0 14px 0; flex-wrap:wrap; }
+.biv-tab { background:#1e2640; border:1px solid #3b4a6b; color:#94a3b8; padding:9px 20px; border-radius:10px; font-size:13px; font-family:'Inter',sans-serif; font-weight:600; cursor:pointer; transition:all 0.18s; letter-spacing:0.02em; }
+.biv-tab:hover { border-color:#7c3aed; color:#c4b5fd; background:#242d52; }
+.biv-tab.active { background:linear-gradient(135deg,#2d1b69,#1e3a5f); border-color:#7c3aed; color:#e9d5ff; box-shadow:0 0 14px rgba(124,58,237,0.35); }
+.biv-section-title { font-size:11px; color:#7dd3fc; letter-spacing:1.8px; text-transform:uppercase; margin-bottom:10px; font-weight:700; }
+.biv-panel { background:#1a2035; border:1px solid #2e3f63; border-radius:12px; padding:16px; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.biv-badge { display:inline-block; background:#2d1b69; border:1px solid #6d28d9; color:#c4b5fd; font-size:10px; padding:2px 9px; border-radius:12px; font-family:'JetBrains Mono',monospace; }
+.biv-badge-green { background:#064e3b; border-color:#059669; color:#6ee7b7; }
+.biv-badge-yellow { background:#451a03; border-color:#b45309; color:#fcd34d; }
+.biv-btn { background:#1e2a4a; border:1px solid #3b4a6b; color:#c4b5fd; font-size:13px; font-family:'JetBrains Mono',monospace; padding:10px 22px; border-radius:9px; cursor:pointer; transition:all 0.18s; white-space:nowrap; font-weight:600; }
+.biv-btn:hover { background:#2d3d6b; border-color:#7c3aed; box-shadow:0 0 10px rgba(124,58,237,0.3); }
+.biv-btn:disabled { opacity:0.3; cursor:not-allowed; }
+.biv-btn-green { color:#6ee7b7; border-color:#059669; }
+.biv-btn-green:hover { background:#064e3b; border-color:#10b981; box-shadow:0 0 10px rgba(16,185,129,0.3); }
+.biv-input { background:#1a2035; border:1px solid #3b4a6b; color:#e2e8f0; font-family:'JetBrains Mono',monospace; font-size:13px; padding:7px 12px; border-radius:8px; outline:none; }
+.biv-input:focus { border-color:#7c3aed; box-shadow:0 0 8px rgba(124,58,237,0.25); }
+.biv-code-line { padding:4px 14px; font-size:13px; font-family:'JetBrains Mono',monospace; line-height:1.95; color:#7dd3fc; border-left:3px solid transparent; transition:background 0.15s, color 0.15s; }
+.biv-code-line.active { background:#332500; color:#fde68a; border-left-color:#f59e0b; box-shadow:inset 0 0 0 1px rgba(245,158,11,0.2); font-weight:600; }
+.biv-code-line.dim { opacity:0.3; }
+.biv-app-card { background:#1a2035; border:1px solid #2e3f63; border-radius:12px; padding:16px 18px; transition:border-color 0.15s; }
+.biv-app-card:hover { border-color:#7c3aed; box-shadow:0 0 12px rgba(124,58,237,0.15); }
+.biv-apps-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-top:14px; }
 </style>
 
-<h2 style="font-size:20px;font-weight:700;background:linear-gradient(135deg,#a78bfa,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">Backtracking Interactive Visualizer</h2>
-<p style="color:#71717a;font-size:13px;margin-bottom:0">Step through the decision tree, see state change live, watch the code highlight — problem by problem.</p>
+<h2 style="font-size:22px;font-weight:700;background:linear-gradient(135deg,#a78bfa,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">Backtracking Interactive Visualizer</h2>
+<p style="color:#94a3b8;font-size:14px;margin-bottom:0">Step through the decision tree — watch state change live and code highlight in sync.</p>
 
 <div class="biv-tabs">
   <button class="biv-tab active" onclick="bivSelectProblem('subsets',this)">LC 78 — Subsets</button>
@@ -2178,71 +2177,60 @@ result.Add(new List<int>(current));  // ✓ copy
   </div>
 </div>
 
-<!-- Main layout -->
-<div style="display:grid;grid-template-columns:1fr 340px;gap:12px;align-items:start">
+<!-- 3-column: State | Tree | Code -->
+<div style="display:grid;grid-template-columns:220px 1fr 260px;gap:14px;align-items:start">
 
-  <!-- Left: tree / grid visualizer -->
+  <!-- LEFT: State -->
   <div>
-    <div class="biv-section-title">Decision Tree</div>
-    <div class="biv-panel" style="padding:10px;min-height:260px;position:relative">
-      <svg id="biv-svg" style="width:100%;display:block;overflow:visible" viewBox="0 0 600 300"></svg>
-      <!-- Word search grid (hidden by default) -->
-      <div id="biv-wsgrid" style="display:none;justify-content:center;align-items:center;padding:10px">
-        <div id="biv-wsgrid-inner" style="display:inline-grid;gap:4px"></div>
+    <div class="biv-section-title">Variables</div>
+    <div class="biv-panel" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div style="font-size:10px;color:#7dd3fc;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">current</div>
+        <div id="biv-state-current" style="font-size:15px;color:#6ee7b7;font-weight:700;font-family:'JetBrains Mono',monospace;word-break:break-all">[]</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#7dd3fc;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px" id="biv-state-aux-label">index</div>
+        <div id="biv-state-aux" style="font-size:15px;color:#c4b5fd;font-weight:700;font-family:'JetBrains Mono',monospace">0</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#7dd3fc;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">results</div>
+        <div id="biv-state-results" style="font-size:12px;font-family:'JetBrains Mono',monospace;color:#6ee7b7;line-height:2;max-height:120px;overflow-y:auto"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#7dd3fc;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">call stack</div>
+        <div id="biv-state-stack" style="font-size:11px;font-family:'JetBrains Mono',monospace;line-height:2;max-height:120px;overflow-y:auto"></div>
       </div>
     </div>
-    <div id="biv-action" style="text-align:center;font-size:12px;color:#fbbf24;min-height:22px;margin-top:10px;padding:0 4px"></div>
   </div>
 
-  <!-- Right: state + code -->
+  <!-- CENTER: Tree + action + controls -->
   <div style="display:flex;flex-direction:column;gap:10px">
-
-    <!-- State panel -->
-    <div>
-      <div class="biv-section-title">State</div>
-      <div class="biv-panel" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div>
-          <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">current</div>
-          <div id="biv-state-current" style="font-size:13px;color:#34d399;font-weight:700;font-family:'JetBrains Mono',monospace;word-break:break-all">[]</div>
-        </div>
-        <div>
-          <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px" id="biv-state-aux-label">index</div>
-          <div id="biv-state-aux" style="font-size:13px;color:#a78bfa;font-weight:700;font-family:'JetBrains Mono',monospace">0</div>
-        </div>
-        <div style="grid-column:1/-1">
-          <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">results found</div>
-          <div id="biv-state-results" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#34d399;line-height:1.8;max-height:80px;overflow-y:auto"></div>
-        </div>
-        <div style="grid-column:1/-1">
-          <div style="font-size:9px;color:#71717a;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">call stack</div>
-          <div id="biv-state-stack" style="font-size:11px;font-family:'JetBrains Mono',monospace;line-height:1.8;max-height:80px;overflow-y:auto"></div>
-        </div>
+    <div class="biv-section-title">Decision Tree</div>
+    <div class="biv-panel" style="padding:14px;position:relative">
+      <svg id="biv-svg" style="width:100%;display:block;overflow:visible" viewBox="0 0 700 380"></svg>
+      <div id="biv-wsgrid" style="display:none;justify-content:center;align-items:center;padding:20px">
+        <div id="biv-wsgrid-inner" style="display:inline-grid;gap:6px"></div>
       </div>
     </div>
-
-    <!-- Code panel -->
-    <div>
-      <div class="biv-section-title">Code <span id="biv-code-lang" class="biv-badge" style="font-size:9px;margin-left:4px">C#</span></div>
-      <div class="biv-panel" style="padding:6px 0;overflow-x:auto">
-        <div id="biv-code-panel" style="min-width:300px"></div>
-      </div>
+    <div id="biv-action" style="text-align:center;font-size:12px;color:#fde68a;min-height:22px;font-family:'JetBrains Mono',monospace;padding:0 4px"></div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+      <button class="biv-btn" id="biv-btn-back" onclick="bivStep(-1)">← Back</button>
+      <button class="biv-btn biv-btn-green" id="biv-btn-play" onclick="bivTogglePlay()">▶ Play</button>
+      <button class="biv-btn" id="biv-btn-fwd" onclick="bivStep(1)">Step →</button>
+      <button class="biv-btn" onclick="bivReset()" style="color:#94a3b8">↺ Reset</button>
+      <input type="range" id="biv-speed" min="1" max="5" value="3" style="width:70px;accent-color:#8b5cf6">
+      <span id="biv-step-counter" style="color:#94a3b8;font-size:12px;font-family:'JetBrains Mono',monospace;min-width:70px;text-align:center">1 / 1</span>
     </div>
-
   </div>
-</div>
 
-<!-- Controls -->
-<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap">
-  <button class="biv-btn" id="biv-btn-back" onclick="bivStep(-1)">← Back</button>
-  <button class="biv-btn biv-btn-green" id="biv-btn-play" onclick="bivTogglePlay()">▶ Play</button>
-  <button class="biv-btn" id="biv-btn-fwd" onclick="bivStep(1)">Step →</button>
-  <button class="biv-btn" onclick="bivReset()" style="color:#71717a">↺ Reset</button>
-  <div style="display:flex;align-items:center;gap:8px;margin-left:8px">
-    <span style="font-size:11px;color:#71717a">Speed</span>
-    <input type="range" id="biv-speed" min="1" max="5" value="3" style="width:80px;accent-color:#8b5cf6">
-    <span style="font-size:11px;color:#71717a">Fast</span>
+  <!-- RIGHT: Code -->
+  <div>
+    <div class="biv-section-title">Code <span id="biv-code-lang" class="biv-badge" style="font-size:9px;margin-left:4px">C#</span></div>
+    <div class="biv-panel" style="padding:8px 0;overflow-x:auto">
+      <div id="biv-code-panel"></div>
+    </div>
   </div>
-  <span id="biv-step-counter" style="color:#71717a;font-size:12px;font-family:'JetBrains Mono',monospace;min-width:80px;text-align:center">1 / 1</span>
+
 </div>
 
 <div style="margin-top:32px">
@@ -2459,6 +2447,16 @@ function selectConcept(id) {
   placeholder.classList.add("hidden");
   content.classList.remove("hidden");
 
+  // Expand #main for full-bleed interactive concepts, restore otherwise
+  const mainEl = document.getElementById('main');
+  if (concept.id === 'backtracking-interactive') {
+    mainEl.style.maxWidth = 'none';
+    mainEl.style.padding = '20px 24px';
+  } else {
+    mainEl.style.maxWidth = '';
+    mainEl.style.padding = '';
+  }
+
   // Raw HTML concepts (start with <) need direct injection + script re-execution
   if (concept.content.trimStart().startsWith('<')) {
     content.innerHTML = concept.content;
@@ -2476,6 +2474,17 @@ function selectConcept(id) {
       document.head.appendChild(s);
       old.remove();
     });
+    // Trigger biv init if present (MutationObserver may not fire reliably on innerHTML)
+    if (window.bivRebuild) {
+      window.bivRebuild();
+    }
+    setTimeout(function() {
+      var root = document.getElementById('biv-root');
+      if (root && !root.dataset.bivInit && window.bivRebuild) {
+        root.dataset.bivInit = '1';
+        window.bivRebuild();
+      }
+    }, 50);
   } else {
     content.innerHTML = marked.parse(concept.content);
   }
@@ -2715,12 +2724,12 @@ buildSidebar(CONCEPTS);
 
   // ── colour palette ──────────────────────────────────────────────────────────
   var C = {
-    bg:'#0c0c0f', surface:'#111116', border:'#232329', border2:'#2e2e38',
-    muted:'#3f3f52', text:'#71717a', textHi:'#f0f0f5',
-    accent:'#a78bfa', accentDim:'#4c1d95',
-    green:'#34d399', greenDim:'#166534', greenBg:'#0a1f14',
-    yellow:'#fbbf24', yellowDim:'#854d0e', yellowBg:'#1c1400',
-    pathBg:'#16122a', activeBg:'#1f1a08', nodeStroke:'#2e2e38'
+    bg:'#1a2035', surface:'#1e2640', border:'#2e3f63', border2:'#3b4a6b',
+    muted:'#4a5a80', text:'#7dd3fc', textHi:'#e2e8f0',
+    accent:'#c4b5fd', accentDim:'#2d1b69',
+    green:'#6ee7b7', greenDim:'#059669', greenBg:'#064e3b',
+    yellow:'#fde68a', yellowDim:'#b45309', yellowBg:'#2d1f00',
+    pathBg:'#1e2d55', activeBg:'#2d1f00', nodeStroke:'#3b4a6b'
   };
 
   // ── current problem state ───────────────────────────────────────────────────
@@ -2823,9 +2832,9 @@ buildSidebar(CONCEPTS);
     function dfs(i, depth, parentId, parentX, branchIdx, totalSiblings, callStack) {
       var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * (280 / Math.pow(2, depth));
       var x = parentX + spread;
-      var y = 24 + depth * 68;
+      var y = 28 + depth * 90;
       var id = 'n' + (nodeId++);
-      nodes[id] = { x: x, y: y, r: Math.max(10, 19 - depth * 2), label: 'i=' + i, sub: '[' + current.join(',') + ']', leaf: false };
+      nodes[id] = { x: x, y: y, r: Math.max(12, 20 - depth * 2), label: 'i=' + i, sub: '[' + current.join(',') + ']', leaf: false };
       if (parentId !== null) {
         edges.push({ from: parentId, to: id, label: branchIdx === 0 ? 'skip' : '+' + numsArr[i - 1] });
       }
@@ -2844,6 +2853,14 @@ buildSidebar(CONCEPTS);
             : 'Include nums[' + (i-1) + ']=' + numsArr[i-1] + ' — pushed, now dfs(' + i + ')')
       });
 
+      // check base case (line 1)
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: auxStr, auxLabel: 'index', codeLine: 1,
+        action: 'Check: i(' + i + ') == nums.Length(' + numsArr.length + ')?'
+      });
+
       if (i === numsArr.length) {
         nodes[id].leaf = true; nodes[id].label = 'BASE'; nodes[id].sub = '[' + current.join(',') + ']';
         var snap = current.slice();
@@ -2852,21 +2869,37 @@ buildSidebar(CONCEPTS);
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
           aux: auxStr, auxLabel: 'index', codeLine: 2,
-          action: 'BASE — i==' + numsArr.length + ', record [' + snap.join(',') + ']'
+          action: 'BASE — record [' + snap.join(',') + ']'
         });
         return id;
       }
 
+      // skip (line 6)
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: auxStr, auxLabel: 'index', codeLine: 6,
+        action: 'Skip nums[' + i + ']=' + numsArr[i] + ' → dfs(' + (i+1) + ')'
+      });
       dfs(i + 1, depth + 1, id, x, 0, 2, myStack);
 
+      // include (lines 8–9)
       current.push(numsArr[i]);
       pushFrame(frames, 'tree', {
         activeNode: id, nodes: nodes, edges: edges,
         current: current, results: results, stack: myStack,
         aux: auxStr, auxLabel: 'index', codeLine: 8,
-        action: 'current.Add(' + numsArr[i] + ') → current=[' + current.join(',') + ']'
+        action: 'Include nums[' + i + ']=' + numsArr[i] + ' → current=[' + current.join(',') + ']'
+      });
+      pushFrame(frames, 'tree', {
+        activeNode: id, nodes: nodes, edges: edges,
+        current: current, results: results, stack: myStack,
+        aux: auxStr, auxLabel: 'index', codeLine: 9,
+        action: 'Recurse → dfs(' + (i+1) + ')'
       });
       dfs(i + 1, depth + 1, id, x, 1, 2, myStack);
+
+      // backtrack (line 10)
       current.pop();
       pushFrame(frames, 'tree', {
         activeNode: id, nodes: nodes, edges: edges,
@@ -2898,9 +2931,9 @@ buildSidebar(CONCEPTS);
       if (frames.length >= frameLimit) return;
       var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * Math.max(18, 220 / Math.pow(2, Math.max(1, depth)));
       var x = parentX + spread;
-      var y = 24 + depth * 66;
+      var y = 28 + depth * 88;
       var id = 'n' + (nodeId++);
-      nodes[id] = { x: x, y: y, r: Math.max(9, 18 - depth * 1.5), label: 'r=' + remaining, sub: '[' + current.join(',') + ']', leaf: false };
+      nodes[id] = { x: x, y: y, r: Math.max(11, 20 - depth * 1.5), label: 'r=' + remaining, sub: '[' + current.join(',') + ']', leaf: false };
       if (parentId !== null) {
         edges.push({ from: parentId, to: id, label: current.length ? '+' + current[current.length-1] : '' });
       }
@@ -2980,10 +3013,10 @@ buildSidebar(CONCEPTS);
     function dfs(depth, parentId, parentX, branchIdx, totalSiblings, callStack) {
       var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * Math.max(18, 260 / Math.pow(2, Math.max(1, depth)));
       var x = parentX + spread;
-      var y = 24 + depth * 62;
+      var y = 28 + depth * 88;
       var id = 'n' + (nodeId++);
       var ustr = usedStr();
-      nodes[id] = { x: x, y: y, r: Math.max(10, 18 - depth * 2), label: 'd=' + depth, sub: '[' + current.join(',') + ']', leaf: false };
+      nodes[id] = { x: x, y: y, r: Math.max(12, 20 - depth * 2), label: 'd=' + depth, sub: '[' + current.join(',') + ']', leaf: false };
       if (parentId !== null) {
         edges.push({ from: parentId, to: id, label: current.length ? '+' + current[current.length-1] : '' });
       }
@@ -3229,7 +3262,7 @@ buildSidebar(CONCEPTS);
     var vw = Math.max(600, maxX - minX);
     var vh = Math.max(200, maxY - minY + 20);
     svg.setAttribute('viewBox', minX + ' ' + minY + ' ' + vw + ' ' + vh);
-    svg.style.height = Math.min(340, vh) + 'px';
+    svg.style.height = Math.min(500, Math.max(280, vh)) + 'px';
 
     // Draw edges
     edges.forEach(function(e) {
@@ -3278,7 +3311,7 @@ buildSidebar(CONCEPTS);
       g.appendChild(lbl);
 
       var sub = document.createElementNS('http://www.w3.org/2000/svg','text');
-      sub.setAttribute('x', n.x); sub.setAttribute('y', n.y + n.r + 11);
+      sub.setAttribute('x', n.x); sub.setAttribute('y', n.y + n.r + 16);
       sub.setAttribute('font-size', Math.max(6, n.r - 3));
       sub.setAttribute('fill', n.leaf ? C.muted : C.textHi);
       sub.setAttribute('text-anchor', 'middle');
