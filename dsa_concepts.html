@@ -3251,6 +3251,42 @@ buildSidebar(CONCEPTS);
     bivAllNodes = nodes;
     bivAllEdges = edges;
 
+    // ── Fix layout: proper subtree-width-based x assignment ──────────────────
+    (function fixLayout() {
+      var MIN_W = 58; // minimum width per leaf node
+      // Build children map
+      var children = {};
+      Object.keys(nodes).forEach(function(id) { children[id] = []; });
+      edges.forEach(function(e) { if (children[e.from]) children[e.from].push(e.to); });
+      // Find root
+      var hasParent = {};
+      edges.forEach(function(e) { hasParent[e.to] = true; });
+      var rootId = Object.keys(nodes).find(function(id) { return !hasParent[id]; });
+      if (!rootId) return;
+      // Bottom-up: compute subtree width
+      var sw = {};
+      function calcW(id) {
+        var kids = children[id];
+        if (!kids || kids.length === 0) { sw[id] = MIN_W; return MIN_W; }
+        var total = 0;
+        kids.forEach(function(k) { total += calcW(k); });
+        sw[id] = Math.max(MIN_W, total);
+        return sw[id];
+      }
+      calcW(rootId);
+      // Top-down: assign x from left boundary
+      var rootLeft = nodes[rootId].x - sw[rootId] / 2;
+      function assignX(id, left) {
+        var width = sw[id];
+        nodes[id].x = left + width / 2;
+        var kids = children[id];
+        if (!kids || kids.length === 0) return;
+        var kLeft = left;
+        kids.forEach(function(k) { assignX(k, kLeft); kLeft += sw[k]; });
+      }
+      assignX(rootId, rootLeft);
+    })();
+
     // Compute bounding box
     var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     Object.values(nodes).forEach(function(n) {
