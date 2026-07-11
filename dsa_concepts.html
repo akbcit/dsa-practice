@@ -3626,20 +3626,45 @@ buildSidebar(CONCEPTS);
   }
 
   function syntaxHL(raw) {
+    // Single-pass tokenizer — avoids regexes matching inside already-inserted spans
+    var KW = {void:1,if:1,return:1,for:1,int:1,bool:1,var:1,new:1,true:1,false:1,continue:1};
+    var TY = {List:1,IList:1,Length:1,Count:1,Add:1,RemoveAt:1,Join:1};
     var s = escHtml(raw);
-    // comments
-    s = s.replace(/(\/\/[^\n]*)/g, '<span style="color:#64748b;font-style:italic">$1</span>');
-    // keywords
-    s = s.replace(/\b(void|if|return|for|int|bool|var|new|true|false|continue)\b/g,
-      '<span style="color:#c084fc;font-weight:600">$1</span>');
-    // types
-    s = s.replace(/\b(List|IList|Length|Count|Add|RemoveAt|Join)\b/g,
-      '<span style="color:#67e8f9">$1</span>');
-    // numbers
-    s = s.replace(/\b(\d+)\b/g, '<span style="color:#fb923c">$1</span>');
-    // parens & brackets — bright so they pop
-    s = s.replace(/([()[\]{}])/g, '<span style="color:#f1f5f9;font-weight:700">$1</span>');
-    return s;
+    var out = '', i = 0, n = s.length;
+    while (i < n) {
+      // comment
+      if (s[i]==='/' && s[i+1]==='/') {
+        var e = s.indexOf('\n', i); if (e===-1) e = n;
+        out += '<span style="color:#64748b;font-style:italic">' + s.slice(i,e) + '</span>';
+        i = e; continue;
+      }
+      // HTML entity — pass through untouched
+      if (s[i]==='&') {
+        var sc = s.indexOf(';', i);
+        if (sc !== -1) { out += s.slice(i, sc+1); i = sc+1; continue; }
+      }
+      // word
+      if (/[a-zA-Z_]/.test(s[i])) {
+        var j = i; while (j<n && /[a-zA-Z0-9_]/.test(s[j])) j++;
+        var w = s.slice(i,j);
+        if (KW[w])      out += '<span style="color:#c084fc;font-weight:bold">' + w + '</span>';
+        else if (TY[w]) out += '<span style="color:#67e8f9">' + w + '</span>';
+        else            out += w;
+        i = j; continue;
+      }
+      // number
+      if (/[0-9]/.test(s[i])) {
+        var j = i; while (j<n && /[0-9]/.test(s[j])) j++;
+        out += '<span style="color:#fb923c">' + s.slice(i,j) + '</span>';
+        i = j; continue;
+      }
+      // bracket
+      if ('()[]{}' .indexOf(s[i]) !== -1) {
+        out += '<span style="color:#f1f5f9;font-weight:bold">' + s[i] + '</span>'; i++; continue;
+      }
+      out += s[i]; i++;
+    }
+    return out;
   }
 
   function bivRenderCode(activeLine) {
