@@ -2116,6 +2116,149 @@ result.Add(new List<int>(current));  // ✓ copy
   </div>
 </div>
 `
+  },
+  {
+    id: "heap",
+    name: "Heap / Priority Queue",
+    icon: "🏔",
+    category: "Data Structures",
+    tag: "ds",
+    content: `## Heap / Priority Queue
+
+### What is a heap?
+
+A heap is a data structure that always gives you the **min or max element in O(1)**, and lets you add/remove elements in **O(log n)**.
+
+Think of it as a queue, but instead of first-in-first-out, the **element you care about most always comes out first** — smallest in a min-heap, largest in a max-heap.
+
+---
+
+### Two types
+
+**Min-heap** — smallest element is always at the top.
+**Max-heap** — largest element is always at the top.
+
+C# has \`PriorityQueue<TElement, TPriority>\` — it is a **min-heap** by default (lowest priority number = dequeued first).
+
+---
+
+### When do you use a heap?
+
+Any time you repeatedly need the smallest or largest element from a changing collection.
+
+Classic signals:
+- "find the kth largest/smallest"
+- "find the top k elements"
+- "merge k sorted lists"
+- "find the median of a stream"
+
+---
+
+### What is priority?
+
+Priority is just a number you assign that tells the heap **which element should come out first**. The element with the lowest priority number always comes out first.
+
+You decide what priority means for your problem by asking: "which element do I want next?"
+
+- Want the **smallest number** out first? → priority = the number itself
+- Want the **largest number** out first? → priority = negative of the number
+- Want the **shortest string** out first? → priority = string length
+- Want the **most frequent** element out first? → priority = negative of frequency
+
+Whatever you want out first — give it the lowest priority number.
+
+---
+
+### C# syntax
+
+\`\`\`csharp
+// min-heap — smallest priority comes out first
+var minHeap = new PriorityQueue<int, int>();
+minHeap.Enqueue(value, priority);
+int top = minHeap.Peek();      // look at top, don't remove
+int top = minHeap.Dequeue();   // remove and return top
+int size = minHeap.Count;
+\`\`\`
+
+For a **max-heap**, negate the priority:
+\`\`\`csharp
+minHeap.Enqueue(value, -value);  // negate = max-heap trick
+\`\`\`
+
+---
+
+### The Kth Largest pattern
+
+"Kth largest" = maintain a **min-heap of size k**.
+
+Why min-heap? Because the top of a min-heap of size k is always the kth largest element seen so far.
+
+\`\`\`
+for each number:
+    add to heap
+    if heap size > k:
+        remove the smallest (top of min-heap)
+
+answer = heap.Peek()  ← kth largest
+\`\`\`
+
+Example: nums = [3,2,1,5,6,4], k = 2
+
+\`\`\`
+add 3 → heap: [3]
+add 2 → heap: [2,3]
+add 1 → heap: [2,3] → size > 2 → remove 1 → heap: [2,3]  wait...
+\`\`\`
+
+Actually step by step:
+\`\`\`
+add 3 → [3],         size=1
+add 2 → [2,3],       size=2
+add 1 → [1,2,3],     size=3 > 2 → remove min(1) → [2,3]
+add 5 → [2,3,5],     size=3 > 2 → remove min(2) → [3,5]
+add 6 → [3,5,6],     size=3 > 2 → remove min(3) → [5,6]
+add 4 → [4,5,6],     size=3 > 2 → remove min(4) → [5,6]
+
+Peek() = 5  ← 2nd largest ✓
+\`\`\`
+
+---
+
+### Full solution for LC 215
+
+\`\`\`csharp
+public int FindKthLargest(int[] nums, int k) {
+    var minHeap = new PriorityQueue<int, int>();
+
+    foreach (int n in nums) {
+        minHeap.Enqueue(n, n);
+        if (minHeap.Count > k)
+            minHeap.Dequeue();  // remove smallest
+    }
+
+    return minHeap.Peek();  // kth largest
+}
+\`\`\`
+
+---
+
+### Time and space complexity
+
+| Operation | Complexity |
+|---|---|
+| Enqueue | O(log n) |
+| Dequeue | O(log n) |
+| Peek | O(1) |
+| Overall for kth largest | O(n log k) |
+
+Space: O(k) — heap never grows beyond k elements.
+
+---
+
+### Why not just sort?
+
+Sorting is O(n log n). The heap approach is O(n log k), which is faster when k is small. More importantly, the heap approach works when data is **streaming** — you don't need all elements upfront.
+`
   }
 ];
 
