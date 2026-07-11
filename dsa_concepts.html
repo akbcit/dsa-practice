@@ -2830,7 +2830,7 @@ buildSidebar(CONCEPTS);
     if (numsArr.length > 4) numsArr = numsArr.slice(0, 4);
 
     function dfs(i, depth, parentId, parentX, branchIdx, totalSiblings, callStack) {
-      var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * (280 / Math.pow(2, depth));
+      var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * Math.max(30, 320 / Math.pow(1.6, depth));
       var x = parentX + spread;
       var y = 28 + depth * 90;
       var id = 'n' + (nodeId++);
@@ -2929,7 +2929,7 @@ buildSidebar(CONCEPTS);
 
     function dfs(start, remaining, depth, parentId, parentX, branchIdx, totalSiblings, callStack) {
       if (frames.length >= frameLimit) return;
-      var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * Math.max(18, 220 / Math.pow(2, Math.max(1, depth)));
+      var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * Math.max(30, 320 / Math.pow(1.6, Math.max(1, depth)));
       var x = parentX + spread;
       var y = 28 + depth * 88;
       var id = 'n' + (nodeId++);
@@ -3011,7 +3011,7 @@ buildSidebar(CONCEPTS);
     }
 
     function dfs(depth, parentId, parentX, branchIdx, totalSiblings, callStack) {
-      var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * Math.max(18, 260 / Math.pow(2, Math.max(1, depth)));
+      var spread = totalSiblings <= 1 ? 0 : (branchIdx - (totalSiblings - 1) / 2) * Math.max(30, 320 / Math.pow(1.6, Math.max(1, depth)));
       var x = parentX + spread;
       var y = 28 + depth * 88;
       var id = 'n' + (nodeId++);
