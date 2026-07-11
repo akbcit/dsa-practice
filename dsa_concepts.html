@@ -3088,6 +3088,12 @@ buildSidebar(CONCEPTS);
           aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 7,
           action: 'Pick candidates[' + i + ']=' + candidates[i] + ' → current=[' + current.join(',') + ']'
         });
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'remaining=' + remaining, auxLabel: 'remaining', codeLine: 8,
+          action: 'Recurse → dfs(i=' + i + ', rem=' + (remaining - candidates[i]) + ')'
+        });
         dfs(i, remaining - candidates[i], depth + 1, id, x, i - start, candidates.length - start, myStack);
         current.pop();
         pushFrame(frames, 'tree', {
@@ -3177,6 +3183,12 @@ buildSidebar(CONCEPTS);
           current: current, results: results, stack: myStack,
           aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 8,
           action: 'used[' + i + ']=true, push ' + numsArr[i] + ' → current=[' + current.join(',') + ']'
+        });
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 9,
+          action: 'Recurse → dfs() with current=[' + current.join(',') + ']'
         });
         dfs(depth + 1, id, x, bi, availCount, myStack);
         current.pop();
