@@ -4,7 +4,7 @@ const path = require('path');
 const { exec, execSync } = require('child_process');
 const os = require('os');
 
-const PORT = 8080;
+const PORT = 8081;
 const STATIC = __dirname;
 const PROJECT_DIR = path.join(os.tmpdir(), 'dsa-runner');
 
