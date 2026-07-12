@@ -2407,6 +2407,302 @@ Space: O(k) — heap never grows beyond k elements.
 
 Sorting is O(n log n). The heap approach is O(n log k), which is faster when k is small. More importantly, the heap approach works when data is **streaming** — you don't need all elements upfront.
 `
+  },
+  {
+    id: "topk-visualizer",
+    name: "LC 347 — Top K Visualizer",
+    icon: "📊",
+    category: "Algorithms",
+    tag: "algo",
+    content: `<div id="topk-root" style="font-family:'Inter',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;padding:24px;min-height:100vh">
+<style>
+#topk-root * { box-sizing:border-box; }
+#topk-controls { display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap; }
+#topk-controls label { font-size:12px;color:#64748b; }
+#topk-controls input { background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:13px;width:200px; }
+#topk-controls input.small { width:60px; }
+.topk-btn { padding:6px 16px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;transition:all 0.15s; }
+.topk-btn:hover { border-color:#7c3aed;color:#a78bfa; }
+.topk-btn:disabled { opacity:0.3;cursor:not-allowed; }
+.topk-btn.primary { background:#7c3aed;border-color:#7c3aed;color:#fff; }
+.topk-btn.primary:hover { background:#6d28d9; }
+#topk-stepbar { display:flex;align-items:center;gap:10px;margin-bottom:16px;background:#1e293b;border-radius:10px;padding:10px 16px; }
+#topk-desc { flex:1;font-size:13px;color:#e2e8f0; }
+#topk-counter { font-size:11px;color:#64748b;white-space:nowrap; }
+#topk-phase { font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap; }
+#topk-phase.p1 { background:rgba(59,130,246,0.15);color:#60a5fa; }
+#topk-phase.p2 { background:rgba(168,85,247,0.15);color:#c084fc; }
+#topk-phase.p3 { background:rgba(34,197,94,0.15);color:#4ade80; }
+#topk-body { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px; }
+#topk-left { display:flex;flex-direction:column;gap:12px; }
+#topk-right { display:flex;flex-direction:column;gap:12px; }
+.topk-panel { background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px; }
+.topk-panel h4 { margin:0 0 10px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b; }
+#topk-array { display:flex;flex-wrap:wrap;gap:6px; }
+.topk-cell { width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;border:2px solid #334155;background:#0f1117;color:#71717a;transition:all 0.2s; }
+.topk-cell.active { background:#1c1400;border-color:#fbbf24;color:#fbbf24; }
+.topk-cell.done { background:#16122a;border-color:#7c3aed;color:#a78bfa; }
+#topk-freqmap { display:flex;flex-wrap:wrap;gap:6px; }
+.topk-fm-entry { display:flex;flex-direction:column;align-items:center;padding:6px 10px;border-radius:8px;border:2px solid #334155;background:#0f1117;transition:all 0.2s;min-width:48px; }
+.topk-fm-entry .fm-key { font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#e2e8f0; }
+.topk-fm-entry .fm-val { font-size:10px;color:#64748b;margin-top:2px; }
+.topk-fm-entry.active { background:#1c1400;border-color:#fbbf24; }
+.topk-fm-entry.active .fm-key { color:#fbbf24; }
+.topk-fm-entry.active .fm-val { color:#92400e; }
+#topk-buckets { display:flex;flex-direction:column;gap:6px; }
+.topk-bucket-row { display:flex;align-items:center;gap:8px; }
+.topk-bucket-label { font-size:11px;color:#64748b;font-family:'JetBrains Mono',monospace;width:60px;flex-shrink:0; }
+.topk-bucket-cells { display:flex;gap:4px;flex-wrap:wrap; }
+.topk-bucket-cell { padding:3px 10px;border-radius:6px;font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;border:1px solid #334155;background:#0f1117;color:#71717a;transition:all 0.2s; }
+.topk-bucket-row.active .topk-bucket-label { color:#a78bfa; }
+.topk-bucket-row.active .topk-bucket-cell { border-color:#7c3aed;background:#16122a;color:#a78bfa; }
+.topk-bucket-row.result .topk-bucket-cell { border-color:#22c55e;background:#0a1f14;color:#4ade80; }
+#topk-code { font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8; }
+.topk-code-line { padding:2px 8px;border-radius:4px;border-left:3px solid transparent;color:#94a3b8; }
+.topk-code-line.active { background:#332500;color:#fde68a;border-left-color:#f59e0b;font-weight:600; }
+#topk-result { background:#0a1f14;border:1px solid #22c55e;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-top:4px; }
+#topk-result-label { font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:0.08em; }
+#topk-result-items { display:flex;gap:6px; }
+.topk-result-cell { padding:4px 12px;border-radius:6px;background:#16301a;border:1px solid #22c55e;color:#4ade80;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700; }
+</style>
+
+<h2 style="margin:0 0 4px 0;font-size:20px">📊 LC 347 — Top K Frequent Elements</h2>
+<p style="color:#64748b;font-size:13px;margin:0 0 20px 0">Bucket sort approach: O(n) time, O(n) space</p>
+
+<div id="topk-controls">
+  <div><label>Array</label><br><input id="topk-input" value="1,1,1,2,2,3"></div>
+  <div><label>k</label><br><input id="topk-k" class="small" value="2"></div>
+  <button class="topk-btn primary" onclick="topkBuild()">▶ Visualize</button>
+</div>
+
+<div id="topk-stepbar" style="display:none">
+  <button class="topk-btn" id="topk-prev" onclick="topkStep(-1)">← Prev</button>
+  <button class="topk-btn" id="topk-play" onclick="topkTogglePlay()">▶ Play</button>
+  <button class="topk-btn" id="topk-next" onclick="topkStep(1)">Next →</button>
+  <span id="topk-phase" class="p1">Phase 1</span>
+  <span id="topk-desc">—</span>
+  <span id="topk-counter">1 / 1</span>
+  <button class="topk-btn" onclick="topkBuild()" style="margin-left:auto">↺ Reset</button>
+</div>
+
+<div id="topk-body" style="display:none">
+  <div id="topk-left">
+    <div class="topk-panel">
+      <h4>Input Array</h4>
+      <div id="topk-array"></div>
+    </div>
+    <div class="topk-panel">
+      <h4>Frequency Map</h4>
+      <div id="topk-freqmap"></div>
+    </div>
+    <div class="topk-panel" style="background:#0f1117;border-color:#1e293b">
+      <h4>Code</h4>
+      <div id="topk-code"></div>
+    </div>
+  </div>
+  <div id="topk-right">
+    <div class="topk-panel">
+      <h4>Buckets (index = frequency - 1)</h4>
+      <div id="topk-buckets"></div>
+    </div>
+  </div>
+</div>
+
+<div id="topk-result" style="display:none">
+  <span id="topk-result-label">Result</span>
+  <div id="topk-result-items"></div>
+</div>
+
+<script>
+(function(){
+  var tkFrames = [], tkIdx = 0, tkTimer = null;
+
+  var CODE = [
+    '// Phase 1: count each element',
+    'freqMap[n] = freqMap.GetValueOrDefault(n) + 1;',
+    '// Phase 2: place into buckets by frequency',
+    'buckets[kvp.Value - 1] ??= new List<int>();',
+    'buckets[kvp.Value - 1].Add(kvp.Key);',
+    '// Phase 3: collect from highest freq bucket',
+    'if (bucket == null) continue;',
+    'if (resultList.Count == k) break;',
+    'resultList.Add(bucket[j]);',
+  ];
+
+  function buildFrames(nums, k) {
+    var frames = [];
+    var fm = {}, bkts = new Array(nums.length).fill(null), res = [];
+
+    function snap(b) { return b.map(function(x){return x?x.slice():null;}); }
+    function fmSnap() { var o={}; for(var kk in fm) o[kk]=fm[kk]; return o; }
+
+    frames.push({phase:1,desc:'Start — iterate array to count frequencies',activeArr:-1,fm:{},activeFm:-1,bkts:snap(bkts),activeBkt:-1,res:[],code:0});
+
+    for (var i = 0; i < nums.length; i++) {
+      fm[nums[i]] = (fm[nums[i]]||0)+1;
+      frames.push({phase:1,desc:'nums['+i+']='+nums[i]+' → freqMap['+nums[i]+']='+fm[nums[i]],activeArr:i,fm:fmSnap(),activeFm:nums[i],bkts:snap(bkts),activeBkt:-1,res:[],code:1});
+    }
+
+    frames.push({phase:2,desc:'FreqMap done — now fill buckets. bucket[freq-1] holds all numbers with that frequency',activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:-1,res:[],code:2});
+
+    for (var key in fm) {
+      var freq = fm[key], num = parseInt(key);
+      frames.push({phase:2,desc:'freqMap['+key+']='+freq+' → allocate bucket['+(freq-1)+'] if needed',activeArr:-1,fm:fmSnap(),activeFm:num,bkts:snap(bkts),activeBkt:freq-1,res:[],code:3});
+      if (!bkts[freq-1]) bkts[freq-1]=[];
+      bkts[freq-1].push(num);
+      frames.push({phase:2,desc:'bucket['+(freq-1)+'].Add('+key+') — num '+key+' appears '+freq+' time(s)',activeArr:-1,fm:fmSnap(),activeFm:num,bkts:snap(bkts),activeBkt:freq-1,res:[],code:4});
+    }
+
+    frames.push({phase:3,desc:'Buckets ready — iterate from the end (highest freq) to collect top '+k,activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:-1,res:[],code:5});
+
+    for (var i = bkts.length-1; i >= 0; i--) {
+      if (res.length===k) break;
+      if (!bkts[i]) {
+        frames.push({phase:3,desc:'bucket['+i+'] is empty — skip',activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:i,res:res.slice(),code:6});
+        continue;
+      }
+      for (var j = 0; j < bkts[i].length; j++) {
+        if (res.length===k) { frames.push({phase:3,desc:'result.Count==k='+k+' — done!',activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:i,res:res.slice(),code:7}); break; }
+        res.push(bkts[i][j]);
+        frames.push({phase:3,desc:'result.Add('+bkts[i][j]+') → ['+res.join(',')+']'+(res.length===k?' ✓ Got '+k+'!':''),activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:i,res:res.slice(),code:8});
+      }
+    }
+    return frames;
+  }
+
+  function render(idx) {
+    var f = tkFrames[idx];
+    if (!f) return;
+    tkIdx = idx;
+
+    // phase badge
+    var ph = document.getElementById('topk-phase');
+    ph.textContent = 'Phase '+f.phase;
+    ph.className = 'p'+f.phase;
+    document.getElementById('topk-desc').textContent = f.desc;
+    document.getElementById('topk-counter').textContent = (idx+1)+' / '+tkFrames.length;
+
+    // array
+    var arrEl = document.getElementById('topk-array');
+    arrEl.querySelectorAll('.topk-cell').forEach(function(c,i){
+      c.className = 'topk-cell' + (i===f.activeArr?' active':(i<f.activeArr||f.activeArr===-1&&f.phase>1)?' done':'');
+    });
+
+    // freqmap
+    var fmEl = document.getElementById('topk-freqmap');
+    fmEl.innerHTML = '';
+    for (var kk in f.fm) {
+      var e = document.createElement('div');
+      e.className = 'topk-fm-entry'+(parseInt(kk)===f.activeFm?' active':'');
+      e.innerHTML = '<span class="fm-key">'+kk+'</span><span class="fm-val">×'+f.fm[kk]+'</span>';
+      fmEl.appendChild(e);
+    }
+    if (!Object.keys(f.fm).length) fmEl.innerHTML = '<span style="color:#334155;font-size:12px">empty</span>';
+
+    // buckets
+    var bkEl = document.getElementById('topk-buckets');
+    bkEl.innerHTML = '';
+    var hasAny = f.bkts.some(function(b){return b&&b.length;});
+    if (!hasAny) { bkEl.innerHTML = '<span style="color:#334155;font-size:12px">empty</span>'; }
+    else {
+      for (var i = 0; i < f.bkts.length; i++) {
+        var b = f.bkts[i];
+        if (!b || !b.length) continue;
+        var isActive = i===f.activeBkt;
+        var inResult = f.res.some(function(r){return b.indexOf(r)!==-1;});
+        var row = document.createElement('div');
+        row.className = 'topk-bucket-row'+(isActive?' active':inResult?' result':'');
+        var lbl = document.createElement('span');
+        lbl.className = 'topk-bucket-label';
+        lbl.textContent = 'freq='+(i+1)+':';
+        var cells = document.createElement('div');
+        cells.className = 'topk-bucket-cells';
+        b.forEach(function(n){
+          var c = document.createElement('span');
+          c.className = 'topk-bucket-cell';
+          c.textContent = n;
+          cells.appendChild(c);
+        });
+        row.appendChild(lbl);
+        row.appendChild(cells);
+        bkEl.appendChild(row);
+      }
+    }
+
+    // code
+    var codeEl = document.getElementById('topk-code');
+    codeEl.innerHTML = CODE.map(function(line,i){
+      var cls = 'topk-code-line'+(i===f.code?' active':'');
+      return '<div class="'+cls+'">'+line+'</div>';
+    }).join('');
+
+    // result
+    var resEl = document.getElementById('topk-result');
+    var resItems = document.getElementById('topk-result-items');
+    if (f.res.length) {
+      resEl.style.display='flex';
+      resItems.innerHTML = f.res.map(function(n){return '<span class="topk-result-cell">'+n+'</span>';}).join('');
+    } else { resEl.style.display='none'; }
+
+    // buttons
+    document.getElementById('topk-prev').disabled = idx===0;
+    document.getElementById('topk-next').disabled = idx===tkFrames.length-1;
+  }
+
+  function initArray(nums) {
+    var arrEl = document.getElementById('topk-array');
+    arrEl.innerHTML = '';
+    nums.forEach(function(n){
+      var c = document.createElement('div');
+      c.className = 'topk-cell';
+      c.textContent = n;
+      arrEl.appendChild(c);
+    });
+  }
+
+  window.topkBuild = function() {
+    topkStopPlay();
+    var raw = document.getElementById('topk-input').value.replace(/[\\[\\]]/g,'');
+    var nums = raw.split(',').map(function(s){return parseInt(s.trim());}).filter(function(n){return !isNaN(n);});
+    var k = parseInt(document.getElementById('topk-k').value)||2;
+    if (!nums.length) return;
+    tkFrames = buildFrames(nums, k);
+    tkIdx = 0;
+    initArray(nums);
+    document.getElementById('topk-stepbar').style.display='flex';
+    document.getElementById('topk-body').style.display='grid';
+    document.getElementById('topk-result').style.display='none';
+    render(0);
+  };
+
+  window.topkStep = function(dir) {
+    var next = Math.max(0,Math.min(tkFrames.length-1,tkIdx+dir));
+    render(next);
+  };
+
+  window.topkTogglePlay = function() {
+    var btn = document.getElementById('topk-play');
+    if (tkTimer) { topkStopPlay(); return; }
+    btn.textContent='⏸ Pause';
+    var go = function(){
+      if (tkIdx>=tkFrames.length-1){topkStopPlay();return;}
+      topkStep(1);
+      tkTimer=setTimeout(go,600);
+    };
+    tkTimer=setTimeout(go,100);
+  };
+
+  function topkStopPlay(){
+    if(tkTimer){clearTimeout(tkTimer);tkTimer=null;}
+    var btn=document.getElementById('topk-play');
+    if(btn)btn.textContent='▶ Play';
+  }
+
+  // auto-build on load
+  setTimeout(window.topkBuild, 100);
+})();
+</script>
+</div>`
   }
 ];
 
@@ -2464,7 +2760,7 @@ function selectConcept(id) {
 
   // Expand #main for full-bleed interactive concepts, restore otherwise
   const mainEl = document.getElementById('main');
-  if (concept.id === 'backtracking-interactive') {
+  if (concept.id === 'backtracking-interactive' || concept.id === 'topk-visualizer') {
     mainEl.style.maxWidth = 'none';
     mainEl.style.padding = '20px 24px';
   } else {
