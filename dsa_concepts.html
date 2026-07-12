@@ -3276,87 +3276,120 @@ buildSidebar(CONCEPTS);
     var board = grid.map(function(r){ return r.slice(); });
     var results = [];
     var found = false;
+    var dirNames = ['down','up','right','left'];
 
-    function dfs(r, c, k, path) {
-      var pathCopy = path.slice();
-      var gridState = board.map(function(row){ return row.slice(); });
+    function snap() { return board.map(function(row){ return row.slice(); }); }
+    function pathStr(path) { return '[' + path.map(function(p){ return '('+p[0]+','+p[1]+')'; }).join(',') + ']'; }
 
+    function dfs(r, c, k, path, callStack) {
+      var myStack = callStack.concat(['dfs('+r+','+c+','+k+')']);
+      var aux = 'k='+k+'/'+word.length;
+
+      // Entry frame — line 0
+      frames.push({
+        type: 'grid', grid: snap(), path: path.slice(),
+        current: word.slice(0, k), results: results.slice(),
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 0,
+        action: 'Enter dfs(r='+r+', c='+c+', k='+k+') — looking for word['+k+']="'+(word[k]||'—')+'"'
+      });
+
+      // k == word.length — line 1
+      frames.push({
+        type: 'grid', grid: snap(), path: path.slice(),
+        current: word.slice(0, k), results: results.slice(),
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 1,
+        action: 'Check: k('+k+') == word.Length('+word.length+')? ' + (k === word.length ? '✓ YES — found!' : '✗ NO')
+      });
       if (k === word.length) {
         results.push(word);
         frames.push({
-          type: 'grid', grid: gridState, path: pathCopy,
+          type: 'grid', grid: snap(), path: path.slice(),
           current: word, results: results.slice(),
-          stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
-          aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
-          codeLine: 1,
-          action: 'FOUND "' + word + '" — all ' + word.length + ' chars matched!'
+          stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 1,
+          action: 'FOUND "' + word + '" — all chars matched!'
         });
         found = true;
         return true;
       }
-      if (r < 0 || r >= rows || c < 0 || c >= cols) {
-        frames.push({
-          type: 'grid', grid: gridState, path: pathCopy,
-          current: '[' + pathCopy.map(function(p){ return '(' + p[0] + ',' + p[1] + ')'; }).join(',') + ']',
-          results: results.slice(),
-          stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
-          aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
-          codeLine: 2,
-          action: 'Out of bounds (' + r + ',' + c + ') — backtrack'
-        });
-        return false;
-      }
-      if (board[r][c] === '#' || board[r][c] !== word[k]) {
-        frames.push({
-          type: 'grid', grid: gridState, path: pathCopy,
-          current: '[' + pathCopy.map(function(p){ return '(' + p[0] + ',' + p[1] + ')'; }).join(',') + ']',
-          results: results.slice(),
-          stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
-          aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
-          codeLine: 3,
-          action: 'Cell (' + r + ',' + c + ')="' + (board[r][c] === '#' ? 'visited' : board[r][c]) + '" ≠ word[' + k + ']="' + word[k] + '" — backtrack'
-        });
-        return false;
-      }
 
+      // bounds check — line 2
+      var oob = r < 0 || r >= rows || c < 0 || c >= cols;
       frames.push({
-        type: 'grid', grid: gridState, path: pathCopy.concat([[r,c]]),
-        current: word.slice(0, k + 1),
-        results: results.slice(),
-        stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
-        aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
-        codeLine: 4,
-        action: 'Match! board[' + r + '][' + c + ']="' + word[k] + '" → mark visited, matched "' + word.slice(0, k + 1) + '"'
+        type: 'grid', grid: snap(), path: path.slice(),
+        current: word.slice(0, k), results: results.slice(),
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 2,
+        action: 'Bounds check ('+r+','+c+'): ' + (oob ? '✗ out of bounds — return false' : '✓ in bounds')
+      });
+      if (oob) return false;
+
+      // char match check — line 3
+      // include current cell in path so it lights up amber while being examined
+      var examPath = path.concat([[r,c]]);
+      var cell = board[r][c];
+      var mismatch = cell === '#' || cell !== word[k];
+      frames.push({
+        type: 'grid', grid: snap(), path: examPath,
+        current: word.slice(0, k), results: results.slice(),
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 3,
+        action: 'board['+r+']['+c+']="'+(cell==='#'?'visited':cell)+'" vs word['+k+']="'+word[k]+'": ' + (mismatch ? '✗ no match — return false' : '✓ match!')
+      });
+      if (mismatch) return false;
+
+      // save tmp — line 4
+      var tmp = board[r][c];
+      frames.push({
+        type: 'grid', grid: snap(), path: examPath,
+        current: word.slice(0, k+1), results: results.slice(),
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 4,
+        action: 'tmp = board['+r+']['+c+'] = "'+tmp+'" (saved so we can restore later)'
       });
 
-      var tmp = board[r][c];
+      // mark visited — line 5
       board[r][c] = '#';
       var newPath = path.concat([[r,c]]);
+      frames.push({
+        type: 'grid', grid: snap(), path: newPath.slice(),
+        current: word.slice(0, k+1), results: results.slice(),
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 5,
+        action: 'board['+r+']['+c+'] = "#" — marked visited so we don\'t reuse this cell'
+      });
 
+      // explore 4 directions — lines 6-7
       var dirs = [[1,0],[-1,0],[0,1],[0,-1]];
       var res = false;
       for (var d = 0; d < dirs.length; d++) {
-        if (dfs(dirs[d][0] + r, dirs[d][1] + c, k + 1, newPath)) { res = true; break; }
+        var nr = dirs[d][0] + r, nc = dirs[d][1] + c;
+        frames.push({
+          type: 'grid', grid: snap(), path: newPath.slice(),
+          current: word.slice(0, k+1), results: results.slice(),
+          stack: myStack, aux: aux, auxLabel: 'char index', codeLine: d < 2 ? 6 : 7,
+          action: 'Try '+dirNames[d]+' → dfs('+nr+','+nc+','+(k+1)+')'
+        });
+        if (dfs(nr, nc, k + 1, newPath, myStack)) { res = true; break; }
       }
 
+      // restore — line 8
       board[r][c] = tmp;
-      if (!res) {
-        frames.push({
-          type: 'grid', grid: board.map(function(row){ return row.slice(); }), path: path.slice(),
-          current: word.slice(0, k),
-          results: results.slice(),
-          stack: ['dfs(' + r + ',' + c + ',' + k + ')'],
-          aux: 'k=' + k + '/' + word.length, auxLabel: 'char index',
-          codeLine: 8,
-          action: 'BACKTRACK — restore board[' + r + '][' + c + ']="' + tmp + '", remove from path'
-        });
-      }
+      frames.push({
+        type: 'grid', grid: snap(), path: path.slice(),
+        current: word.slice(0, k), results: results.slice(),
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 8,
+        action: 'BACKTRACK — restore board['+r+']['+c+']="'+tmp+'", unmark cell'
+      });
+
+      // return — line 9
+      frames.push({
+        type: 'grid', grid: snap(), path: path.slice(),
+        current: word.slice(0, k), results: results.slice(),
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 9,
+        action: 'return ' + res
+      });
       return res;
     }
 
     for (var r = 0; r < rows && !found; r++) {
       for (var c = 0; c < cols && !found; c++) {
-        dfs(r, c, 0, []);
+        dfs(r, c, 0, [], []);
       }
     }
     return { frames: frames };
@@ -3584,13 +3617,26 @@ buildSidebar(CONCEPTS);
       var oldLen = oldCards.length;
       var newLen = newStk.length;
 
+      function makeCardHTML(si, label) {
+        var prefix = si === 0
+          ? '<span style="color:#475569;font-size:9px">call 1 (root)</span>'
+          : '<span style="color:#475569;font-size:9px">call ' + (si+1) + ' &mdash; called by frame ' + si + '</span>';
+        var connector = si > 0 ? '<span style="color:#334155;margin-right:4px">└─</span>' : '';
+        return prefix + '<br>' + connector + label;
+      }
+
+      function applyIndent(card, si) {
+        card.style.marginLeft = (si * 14) + 'px';
+      }
+
       if (newLen > oldLen) {
         // Push: add new card at top (end of flex-col-reverse = visually top)
         for (var si = oldLen; si < newLen; si++) {
           var card = document.createElement('div');
           card.className = 'biv-stack-card ' + (si === newLen - 1 ? 'active' : 'paused');
           card.dataset.depth = si;
-          card.innerHTML = '<span style="color:#64748b;font-size:9px">frame ' + (si+1) + '</span><br>' + newStk[si];
+          card.innerHTML = makeCardHTML(si, newStk[si]);
+          applyIndent(card, si);
           cardContainer.appendChild(card);
         }
         // Mark all but last as paused
@@ -3610,7 +3656,8 @@ buildSidebar(CONCEPTS);
         // Same depth — just refresh labels and active state
         Array.from(cardContainer.children).forEach(function(c, ci) {
           c.className = 'biv-stack-card ' + (ci === newLen - 1 ? 'active' : 'paused');
-          c.innerHTML = '<span style="color:#64748b;font-size:9px">frame ' + (ci+1) + '</span><br>' + newStk[ci];
+          c.innerHTML = makeCardHTML(ci, newStk[ci]);
+          applyIndent(c, ci);
         });
       }
     }
