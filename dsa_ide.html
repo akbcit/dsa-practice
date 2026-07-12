@@ -463,12 +463,20 @@
     }
     #attempt-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
     .attempt-tab {
-      padding: 3px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
       font-family: 'Inter', sans-serif; cursor: pointer; border: 1px solid var(--border2);
       background: var(--surface2); color: var(--muted); transition: all 0.15s;
+      display: flex; align-items: center; gap: 6px;
     }
     .attempt-tab:hover { color: var(--text); border-color: var(--accent); }
     .attempt-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .attempt-tab-del {
+      font-size: 11px; opacity: 0.4; line-height: 1; cursor: pointer;
+      padding: 0 1px; border-radius: 3px; transition: opacity 0.15s;
+    }
+    .attempt-tab-del:hover { opacity: 1; color: #ef4444; }
+    .attempt-tab.active .attempt-tab-del { opacity: 0.6; color: #fff; }
+    .attempt-tab.active .attempt-tab-del:hover { opacity: 1; color: #fca5a5; }
     #btn-new-attempt {
       padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
       font-family: 'Inter', sans-serif; cursor: pointer; border: 1px dashed var(--border2);
@@ -4499,9 +4507,40 @@ function renderAttemptTabs(id) {
   for (let i = 1; i <= total; i++) {
     const t = document.createElement('div');
     t.className = 'attempt-tab' + (i === currentAttempt ? ' active' : '');
-    t.textContent = `Attempt ${i}`;
-    t.onclick = () => switchAttempt(i);
+    const label = document.createElement('span');
+    label.textContent = `Attempt ${i}`;
+    label.onclick = () => switchAttempt(i);
+    t.appendChild(label);
+    if (total > 1) {
+      const del = document.createElement('span');
+      del.className = 'attempt-tab-del';
+      del.textContent = '✕';
+      del.title = 'Delete this attempt';
+      del.onclick = (e) => { e.stopPropagation(); deleteAttempt(id, i); };
+      t.appendChild(del);
+    }
     tabs.appendChild(t);
+  }
+}
+
+function deleteAttempt(id, n) {
+  const total = getAttemptCount(id);
+  if (total <= 1) return; // never delete the only attempt
+  // Remove this attempt's key
+  localStorage.removeItem(attemptKey(id, n));
+  // Shift all higher attempts down by one
+  for (let i = n + 1; i <= total; i++) {
+    const val = localStorage.getItem(attemptKey(id, i));
+    if (val !== null) localStorage.setItem(attemptKey(id, i - 1), val);
+    localStorage.removeItem(attemptKey(id, i));
+  }
+  // Land on a valid attempt
+  currentAttempt = Math.min(currentAttempt, total - 1);
+  renderAttemptTabs(id);
+  const saved = localStorage.getItem(attemptKey(id, currentAttempt));
+  if (editor) {
+    editor.setValue(saved !== null ? saved : currentProblem.starterCode);
+    monaco.editor.setModelMarkers(editor.getModel(), 'cs-lint', []);
   }
 }
 
@@ -4913,7 +4952,19 @@ function markSolved() {
   const pid = currentProblem.id;
   const solved = getSolved();
   if (solved.includes(pid)) {
-    showCopyToast('Already marked as solved!', '#58a6ff');
+    // If a re-solve attempt is in progress, log it and prompt for confidence
+    if (isResolvePending) {
+      addResolveProblem(pid, coldSolveMode, getConfidence(pid) || 2);
+      isResolvePending = false;
+      coldSolveMode = false;
+      const btn = document.getElementById('btn-cold');
+      if (btn) { btn.style.display = 'none'; btn.classList.remove('cold-active'); }
+      renderSolveInfo(pid);
+      updateReviewBtnBadge();
+      showCopyToast('Re-solve logged! Update confidence below.', '#22c55e');
+    } else {
+      showCopyToast('Already solved — use + New Attempt to re-solve', '#58a6ff');
+    }
     return;
   }
 
@@ -5292,7 +5343,7 @@ async function runCode() {
 
   // ── 1. Local .NET server (server.js) — fastest, no internet needed ──────────
   try {
-    const res = await fetchWithTimeout('http://localhost:8080/execute',
+    const res = await fetchWithTimeout('http://localhost:8081/execute',
       { method: 'POST', headers: jsonHeader, body: JSON.stringify({ code }) }, 15000);
     if (!res.ok) throw new Error();
     showLocalResult(await res.json()); success = true;
@@ -5324,7 +5375,7 @@ async function runCode() {
 }
 
 function showLocalServerPrompt(out) {
-  const cmd = 'npx serve "G:\\job_search" -p 8080';
+  const cmd = 'npx serve "G:\\job_search" -p 8081';
   out.innerHTML = `
     <div class="out-label" style="color:var(--accent);margin-bottom:12px;">ONE-TIME SETUP NEEDED</div>
     <div class="out-info">Chrome blocks all network requests from <code style="background:#1e1e2e;padding:2px 6px;border-radius:4px;">file://</code> — this can't be bypassed.</div>
@@ -5334,16 +5385,16 @@ function showLocalServerPrompt(out) {
       <button onclick="copyCmd()" id="btn-copy-cmd" style="background:var(--accent);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap;flex-shrink:0;">Copy</button>
     </div>
     <div class="out-info" style="margin-top:10px;">1. Open Terminal / PowerShell &nbsp;→&nbsp; paste &nbsp;→&nbsp; press Enter<br>
-    2. Open <a href="http://localhost:8080/dsa_ide.html" target="_blank" style="color:var(--accent);">http://localhost:8080/dsa_ide.html</a><br>
+    2. Open <a href="http://localhost:8081/dsa_ide.html" target="_blank" style="color:var(--accent);">http://localhost:8081/dsa_ide.html</a><br>
     3. Run Code works from now on (keep terminal open)</div>
   `;
 }
 
 function copyCmd() {
-  const cmd = 'npx serve "G:\\\\job_search" -p 8080';
-  navigator.clipboard.writeText('npx serve "G:\\job_search" -p 8080').catch(() => {
+  const cmd = 'npx serve "G:\\\\job_search" -p 8081';
+  navigator.clipboard.writeText('npx serve "G:\\job_search" -p 8081').catch(() => {
     const ta = document.createElement('textarea');
-    ta.value = 'npx serve "G:\\job_search" -p 8080';
+    ta.value = 'npx serve "G:\\job_search" -p 8081';
     document.body.appendChild(ta); ta.select();
     document.execCommand('copy'); document.body.removeChild(ta);
   });
