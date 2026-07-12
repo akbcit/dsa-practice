@@ -3200,21 +3200,39 @@ buildSidebar(CONCEPTS);
       var availCount = used.filter(function(u) { return !u; }).length;
       var bi = 0;
       for (var i = 0; i < numsArr.length; i++) {
-        if (used[i]) continue;
+        // Show the used[i] check for every i
+        if (used[i]) {
+          pushFrame(frames, 'tree', {
+            activeNode: id, nodes: nodes, edges: edges,
+            current: current, results: results, stack: myStack,
+            aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 9,
+            action: '✗ i=' + i + ': nums[' + i + ']=' + numsArr[i] + ' already used — skip'
+          });
+          continue;
+        }
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
-          aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 9,
-          action: 'i=' + i + ': nums[' + i + ']=' + numsArr[i] + ' is free — try it'
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 9,
+          action: '✓ i=' + i + ': nums[' + i + ']=' + numsArr[i] + ' is free — try it'
         });
+        // used[i] = true — highlight line 11
         used[i] = true;
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 11,
+          action: 'used[' + i + '] = true'
+        });
+        // current.Add — highlight line 12
         current.push(numsArr[i]);
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
           aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 12,
-          action: 'used[' + i + ']=true, push ' + numsArr[i] + ' → current=[' + current.join(',') + ']'
+          action: 'current.Add(' + numsArr[i] + ') → [' + current.join(',') + ']'
         });
+        // dfs() — highlight line 14
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
@@ -3226,15 +3244,23 @@ buildSidebar(CONCEPTS);
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
           aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 14,
-          action: '↑ Returned to dfs(depth=' + depth + ') — now backtrack nums[' + i + ']=' + numsArr[i]
+          action: '↑ Returned to dfs(depth=' + depth + ') — now backtrack'
         });
+        // RemoveAt — highlight line 16
         current.pop();
+        pushFrame(frames, 'tree', {
+          activeNode: id, nodes: nodes, edges: edges,
+          current: current, results: results, stack: myStack,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 16,
+          action: 'RemoveAt → current=[' + current.join(',') + ']'
+        });
+        // used[i] = false — highlight line 17
         used[i] = false;
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
           aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 17,
-          action: 'BACKTRACK — pop ' + numsArr[i] + ', used[' + i + ']=false → current=[' + current.join(',') + ']'
+          action: 'used[' + i + '] = false'
         });
         bi++;
       }
