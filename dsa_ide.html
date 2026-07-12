@@ -4173,9 +4173,15 @@ function setConfidence(level) {
   const map = getConfidenceMap();
   map[pid] = level;
   localStorage.setItem('dsa_confidence', JSON.stringify(map));
-  // Log as re-solve if a new attempt was started on an already-solved problem
-  if (isResolvePending) {
-    addResolveProblem(pid, coldSolveMode, level);
+  // Log as re-solve if: new attempt was started OR problem was due for review
+  const isDue = getDueProblems().map(String).includes(String(pid));
+  if (isResolvePending || isDue) {
+    const today = new Date().toISOString().slice(0, 10);
+    const resolves = getResolvesFor(pid);
+    const alreadyLoggedToday = resolves.length > 0 && resolves[resolves.length - 1].date === today;
+    if (!alreadyLoggedToday) {
+      addResolveProblem(pid, coldSolveMode, level);
+    }
     isResolvePending = false;
     coldSolveMode = false;
     const btn = document.getElementById('btn-cold');
