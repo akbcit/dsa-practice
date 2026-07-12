@@ -2127,6 +2127,13 @@ result.Add(new List<int>(current));  // ✓ copy
 
 <style>
 #biv-root * { box-sizing: border-box; }
+#biv-stack-cards { display:flex; flex-direction:column-reverse; gap:4px; max-height:220px; overflow-y:auto; }
+.biv-stack-card { border-radius:8px; padding:7px 10px; font-size:11px; font-family:'JetBrains Mono',monospace; border:1px solid #2e3f63; line-height:1.4; animation:bivSlideIn 0.18s ease; }
+.biv-stack-card.active { background:#1e2d55; border-color:#7c3aed; color:#e2e8f0; box-shadow:0 0 10px rgba(124,58,237,0.25); }
+.biv-stack-card.paused { background:#161d2e; border-color:#2e3f63; color:#4a5a80; }
+.biv-stack-card.popping { animation:bivSlideOut 0.2s ease forwards; }
+@keyframes bivSlideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes bivSlideOut { to { opacity:0; transform:translateY(-8px); height:0; padding:0; margin:0; } }
 .biv-tabs { display:flex; gap:8px; padding:16px 0 14px 0; flex-wrap:wrap; }
 .biv-tab { background:#1e2640; border:1px solid #3b4a6b; color:#94a3b8; padding:9px 20px; border-radius:10px; font-size:13px; font-family:'Inter',sans-serif; font-weight:600; cursor:pointer; transition:all 0.18s; letter-spacing:0.02em; }
 .biv-tab:hover { border-color:#7c3aed; color:#c4b5fd; background:#242d52; }
@@ -2197,8 +2204,8 @@ result.Add(new List<int>(current));  // ✓ copy
         <div id="biv-state-results" style="font-size:12px;font-family:'JetBrains Mono',monospace;color:#6ee7b7;line-height:2;max-height:120px;overflow-y:auto"></div>
       </div>
       <div>
-        <div style="font-size:10px;color:#7dd3fc;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">call stack</div>
-        <div id="biv-state-stack" style="font-size:11px;font-family:'JetBrains Mono',monospace;line-height:2;max-height:120px;overflow-y:auto"></div>
+        <div style="font-size:10px;color:#7dd3fc;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">call stack</div>
+        <div id="biv-stack-cards"></div>
       </div>
     </div>
 
@@ -3524,7 +3531,6 @@ buildSidebar(CONCEPTS);
     var elAux = document.getElementById('biv-state-aux');
     var elAuxLbl = document.getElementById('biv-state-aux-label');
     var elRes = document.getElementById('biv-state-results');
-    var elStk = document.getElementById('biv-state-stack');
     var elAct = document.getElementById('biv-action');
 
     if (elCur) elCur.textContent = Array.isArray(f.current) ? '[' + f.current.join(',') + ']' : f.current;
@@ -3537,12 +3543,44 @@ buildSidebar(CONCEPTS);
         return '<span style="color:' + C.green + ';margin-right:8px">' + r + '</span>';
       }).join('');
     }
-    if (elStk) {
-      var stk = f.stack || [];
-      elStk.innerHTML = stk.map(function(s, i) {
-        var isTop = i === stk.length - 1;
-        return '<div style="color:' + (isTop ? C.accent : '#404060') + ';padding-left:' + (i * 10) + 'px">' + s + (isTop ? ' ←' : '') + '</div>';
-      }).join('');
+
+    // ── Animated call stack cards ─────────────────────────────────────────────
+    var cardContainer = document.getElementById('biv-stack-cards');
+    if (cardContainer) {
+      var newStk = f.stack || [];
+      var oldCards = Array.from(cardContainer.children);
+      var oldLen = oldCards.length;
+      var newLen = newStk.length;
+
+      if (newLen > oldLen) {
+        // Push: add new card at top (end of flex-col-reverse = visually top)
+        for (var si = oldLen; si < newLen; si++) {
+          var card = document.createElement('div');
+          card.className = 'biv-stack-card ' + (si === newLen - 1 ? 'active' : 'paused');
+          card.dataset.depth = si;
+          card.innerHTML = '<span style="color:#64748b;font-size:9px">frame ' + (si+1) + '</span><br>' + newStk[si];
+          cardContainer.appendChild(card);
+        }
+        // Mark all but last as paused
+        Array.from(cardContainer.children).forEach(function(c, ci) {
+          c.className = 'biv-stack-card ' + (ci === newLen - 1 ? 'active' : 'paused');
+        });
+      } else if (newLen < oldLen) {
+        // Pop: animate out extra cards then remove
+        for (var si = newLen; si < oldLen; si++) {
+          var card = oldCards[si];
+          card.classList.add('popping');
+          (function(c){ setTimeout(function(){ if (c.parentNode) c.parentNode.removeChild(c); }, 200); })(card);
+        }
+        // Re-mark top card as active
+        if (newLen > 0) oldCards[newLen-1].className = 'biv-stack-card active';
+      } else {
+        // Same depth — just refresh labels and active state
+        Array.from(cardContainer.children).forEach(function(c, ci) {
+          c.className = 'biv-stack-card ' + (ci === newLen - 1 ? 'active' : 'paused');
+          c.innerHTML = '<span style="color:#64748b;font-size:9px">frame ' + (ci+1) + '</span><br>' + newStk[ci];
+        });
+      }
     }
 
     // Update step counter
