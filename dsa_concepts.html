@@ -2868,17 +2868,23 @@ buildSidebar(CONCEPTS);
   ];
   bivCodes.perms = [
     'void dfs() {',
+    '',
+    '  // base case: all numbers used',
     '  if (current.Count == nums.Length) {',
     '    result.Add(new List<int>(current));',
     '    return;',
     '  }',
+    '',
     '  for (int i = 0; i < nums.Length; i++) {',
     '    if (used[i]) continue;',
-    '    used[i] = true;',
-    '    current.Add(nums[i]);',
-    '    dfs();',
-    '    current.RemoveAt(current.Count - 1);',
-    '    used[i] = false;',
+    '',
+    '    used[i] = true;           // mark used',
+    '    current.Add(nums[i]);     // pick it',
+    '',
+    '    dfs();                    // explore',
+    '',
+    '    current.RemoveAt(current.Count - 1); // undo',
+    '    used[i] = false;                     // undo',
     '  }',
     '}'
   ];
@@ -3170,11 +3176,11 @@ buildSidebar(CONCEPTS);
         action: 'dfs(depth=' + depth + ') — current=[' + current.join(',') + '] used=' + ustr
       });
 
-      // check base case (line 1)
+      // check base case (line 3)
       pushFrame(frames, 'tree', {
         activeNode: id, nodes: nodes, edges: edges,
         current: current, results: results, stack: myStack,
-        aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 1,
+        aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 3,
         action: 'Check: current.Count(' + current.length + ') == nums.Length(' + numsArr.length + ')? ' + (current.length === numsArr.length ? '✓ YES' : '✗ NO')
       });
 
@@ -3185,7 +3191,7 @@ buildSidebar(CONCEPTS);
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
-          aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 2,
+          aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 4,
           action: 'BASE — full perm [' + snap.join(',') + '] recorded'
         });
         return;
@@ -3198,7 +3204,7 @@ buildSidebar(CONCEPTS);
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
-          aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 6,
+          aux: 'used=' + ustr, auxLabel: 'used[]', codeLine: 9,
           action: 'i=' + i + ': nums[' + i + ']=' + numsArr[i] + ' is free — try it'
         });
         used[i] = true;
@@ -3206,20 +3212,20 @@ buildSidebar(CONCEPTS);
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
-          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 8,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 12,
           action: 'used[' + i + ']=true, push ' + numsArr[i] + ' → current=[' + current.join(',') + ']'
         });
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
-          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 9,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 14,
           action: 'Recurse → dfs() with current=[' + current.join(',') + ']'
         });
         dfs(depth + 1, id, x, bi, availCount, myStack);
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
-          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 9,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 14,
           action: '↑ Returned to dfs(depth=' + depth + ') — now backtrack nums[' + i + ']=' + numsArr[i]
         });
         current.pop();
@@ -3227,7 +3233,7 @@ buildSidebar(CONCEPTS);
         pushFrame(frames, 'tree', {
           activeNode: id, nodes: nodes, edges: edges,
           current: current, results: results, stack: myStack,
-          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 11,
+          aux: 'used=' + usedStr(), auxLabel: 'used[]', codeLine: 17,
           action: 'BACKTRACK — pop ' + numsArr[i] + ', used[' + i + ']=false → current=[' + current.join(',') + ']'
         });
         bi++;
@@ -3787,6 +3793,9 @@ buildSidebar(CONCEPTS);
 
   function bivReset() {
     bivStopPlay();
+    // Clear call stack cards immediately so rebuild starts from clean state
+    var cardContainer = document.getElementById('biv-stack-cards');
+    if (cardContainer) cardContainer.innerHTML = '';
     bivRebuild();
   }
 

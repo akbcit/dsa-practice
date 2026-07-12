@@ -295,6 +295,24 @@
     .conf-btn.conf-active-2 { background: rgba(234,179,8,0.15);  border-color: #eab308; opacity: 1; }
     .conf-btn.conf-active-3 { background: rgba(34,197,94,0.15);  border-color: #22c55e; opacity: 1; }
 
+    /* ── RE-SOLVE TRACKING ── */
+    #btn-cold {
+      padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer; border: 1px dashed var(--border2);
+      background: transparent; color: var(--muted); transition: all 0.15s;
+    }
+    #btn-cold:hover { color: #38bdf8; border-color: #38bdf8; }
+    #btn-cold.cold-active { background: rgba(56,189,248,0.12); border-color: #38bdf8; border-style: solid; color: #38bdf8; }
+    #solve-info { font-size: 11px; color: var(--muted); margin-left: 6px; white-space: nowrap; }
+    #solve-info .si-attempts { color: var(--text); font-weight: 600; }
+    #solve-info .si-due { color: #f97316; font-weight: 700; }
+    #review-badge {
+      display: inline-block; background: #f97316; color: #fff;
+      font-size: 10px; font-weight: 700; border-radius: 10px;
+      padding: 0 5px; margin-left: 4px; vertical-align: middle;
+      font-family: 'Inter', sans-serif; line-height: 16px;
+    }
+
     /* ── RESIZE HANDLE ── */
     #resize-handle { width: 3px; background: var(--border); cursor: col-resize; flex-shrink: 0; transition: background 0.2s; }
     #resize-handle:hover { background: var(--accent); }
@@ -522,7 +540,7 @@
   <h1 onclick="goHome()" title="Go to first unsolved" style="cursor:pointer">DSA Practice</h1>
   <select id="problem-select" onchange="loadProblem(this.value)"></select>
   <button class="topbar-btn" id="btn-next" onclick="goNextUnsolved()" title="Jump to next unsolved problem">Next Unsolved &rarr;</button>
-  <button class="topbar-btn" id="btn-review" onclick="goNextShaky()" title="Jump to next low-confidence problem">😕 Review</button>
+  <button class="topbar-btn" id="btn-review" onclick="goNextDue()" title="Jump to next due or low-confidence problem">🔄 Review<span id="review-badge" style="display:none">0</span></button>
   <button id="btn-run" onclick="runCode()">&#9654; Run Code</button>
   <button class="topbar-btn" onclick="formatCode()" title="Fix indentation">&#8644; Format</button>
   <button class="topbar-btn" onclick="copyCode()">Copy for Review</button>
@@ -560,6 +578,8 @@
     <div id="attempt-bar">
       <div id="attempt-tabs"></div>
       <button id="btn-new-attempt" onclick="newAttempt()" title="Start a fresh attempt, keeping old ones">+ New Attempt</button>
+      <button id="btn-cold" onclick="toggleColdSolve()" title="Mark this attempt as cold solve (no hints)" style="display:none">🧊 Cold?</button>
+      <span id="solve-info"></span>
     </div>
     <div id="editor-container"></div>
     <div id="output-panel">
@@ -4145,7 +4165,18 @@ function setConfidence(level) {
   const map = getConfidenceMap();
   map[pid] = level;
   localStorage.setItem('dsa_confidence', JSON.stringify(map));
+  // Log as re-solve if a new attempt was started on an already-solved problem
+  if (isResolvePending) {
+    addResolveProblem(pid, coldSolveMode, level);
+    isResolvePending = false;
+    coldSolveMode = false;
+    const btn = document.getElementById('btn-cold');
+    if (btn) { btn.style.display = 'none'; btn.classList.remove('cold-active'); }
+    showCopyToast('Re-solve logged!', '#22c55e');
+  }
   renderConfidenceBtns(pid);
+  renderSolveInfo(pid);
+  updateReviewBtnBadge();
   buildDropdown();
   scheduleSyncToFile();
 }
@@ -4169,6 +4200,90 @@ function goNextShaky() {
   }
   showCopyToast('No shaky problems — nice!', '#22c55e');
 }
+
+// ─── RE-SOLVE TRACKING ────────────────────────────────────────────────────────
+function getResolves() { try { return JSON.parse(localStorage.getItem('dsa_re_solves') || '{}'); } catch { return {}; } }
+function getResolvesFor(pid) { return (getResolves()[pid] || []); }
+function getSolveCount(pid) {
+  if (!getSolved().includes(pid)) return 0;
+  return 1 + getResolvesFor(pid).length;
+}
+function addResolveProblem(pid, cold, conf) {
+  const all = getResolves();
+  if (!all[pid]) all[pid] = [];
+  all[pid].push({ date: new Date().toISOString().slice(0, 10), cold, conf });
+  localStorage.setItem('dsa_re_solves', JSON.stringify(all));
+  scheduleSyncToFile();
+}
+function getInitialSolveDate(pid) {
+  const dates = getSolveDates();
+  for (const [date, pids] of Object.entries(dates)) {
+    if (pids.includes(pid)) return date;
+  }
+  return null;
+}
+function getLastActivityDate(pid) {
+  const resolves = getResolvesFor(pid);
+  if (resolves.length > 0) return resolves[resolves.length - 1].date;
+  return getInitialSolveDate(pid);
+}
+function daysSince(dateStr) {
+  if (!dateStr) return 999;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+function getDueProblems() {
+  return getSolved().filter(pid => daysSince(getLastActivityDate(pid)) >= 10);
+}
+
+let coldSolveMode = false;
+let isResolvePending = false;
+
+function toggleColdSolve() {
+  coldSolveMode = !coldSolveMode;
+  const btn = document.getElementById('btn-cold');
+  if (btn) btn.classList.toggle('cold-active', coldSolveMode);
+}
+
+function renderSolveInfo(pid) {
+  const el = document.getElementById('solve-info');
+  const btn = document.getElementById('btn-cold');
+  if (!el) return;
+  const count = getSolveCount(pid);
+  if (count === 0) { el.innerHTML = ''; if (btn) btn.style.display = 'none'; return; }
+  const last = getLastActivityDate(pid);
+  const days = daysSince(last);
+  const daysStr = days === 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`;
+  const due = days >= 10;
+  el.innerHTML = `<span class="si-attempts">${count}x solved</span> &bull; last: ${daysStr}${due ? ' <span class="si-due">&bull; due!</span>' : ''}`;
+  if (btn) btn.style.display = isResolvePending ? '' : 'none';
+}
+
+function updateReviewBtnBadge() {
+  const badge = document.getElementById('review-badge');
+  if (!badge) return;
+  const dueIds = new Set(getDueProblems().map(String));
+  const shakyIds = new Set(Object.entries(getConfidenceMap()).filter(([,v]) => v === 1).map(([k]) => k));
+  const total = new Set([...dueIds, ...shakyIds]).size;
+  if (total > 0) { badge.textContent = total; badge.style.display = 'inline-block'; }
+  else { badge.style.display = 'none'; }
+}
+
+function goNextDue() {
+  const dueIds = new Set(getDueProblems().map(String));
+  const shakyIds = new Set(Object.entries(getConfidenceMap()).filter(([,v]) => v === 1).map(([k]) => k));
+  const needReview = new Set([...dueIds, ...shakyIds]);
+  for (let i = 1; i <= PROBLEMS.length; i++) {
+    const idx = (currentIdx + i) % PROBLEMS.length;
+    const p = PROBLEMS[idx];
+    if (needReview.has(String(p.id))) {
+      document.getElementById('problem-select').value = idx;
+      loadProblem(idx);
+      return;
+    }
+  }
+  showCopyToast('All caught up — nothing due! \u{1F3AF}', '#22c55e');
+}
+
 function getSolveDates() { try { return JSON.parse(localStorage.getItem('dsa_solve_dates') || '{}'); } catch(e) { return {}; } }
 function addSolveDate(pid) {
   const today = new Date().toISOString().slice(0, 10);
@@ -4235,6 +4350,7 @@ function collectAllProgress() {
     achievements: getAchs(),
     best_time:    getBestTime(),
     confidence:   getConfidenceMap(),
+    re_solves:    getResolves(),
     code,
     videos,
     guides,
@@ -4291,6 +4407,9 @@ async function loadFromFile() {
     }
     if (d.confidence) {
       localStorage.setItem('dsa_confidence', JSON.stringify(d.confidence));
+    }
+    if (d.re_solves) {
+      localStorage.setItem('dsa_re_solves', JSON.stringify(d.re_solves));
     }
   } catch (_) {}
 }
@@ -4408,6 +4527,15 @@ function newAttempt() {
   editor.setValue(currentProblem.starterCode);
   monaco.editor.setModelMarkers(editor.getModel(), 'cs-lint', []);
   editor.focus();
+  // If already solved, mark as re-solve pending so confidence sets log it
+  if (getSolved().includes(currentProblem.id)) {
+    isResolvePending = true;
+    coldSolveMode = false;
+    const btn = document.getElementById('btn-cold');
+    if (btn) { btn.style.display = ''; btn.classList.remove('cold-active'); }
+    renderSolveInfo(currentProblem.id);
+    showCopyToast('Re-solve started! Set confidence when done.', '#38bdf8');
+  }
 }
 
 // ─── LOAD PROBLEM ────────────────────────────────────────────────────────────
@@ -4419,6 +4547,13 @@ function loadProblem(idx) {
   lastRunHadOutput = false;
   renderProblem(currentProblem);
   renderConfidenceBtns(currentProblem.id);
+  // Reset re-solve state on problem switch
+  isResolvePending = false;
+  coldSolveMode = false;
+  const _coldBtn = document.getElementById('btn-cold');
+  if (_coldBtn) _coldBtn.classList.remove('cold-active');
+  renderSolveInfo(currentProblem.id);
+  updateReviewBtnBadge();
   if (editor) {
     // Migrate old dsa_code_<id> key to attempt 1 if needed
     const oldKey = 'dsa_code_' + currentProblem.id;
