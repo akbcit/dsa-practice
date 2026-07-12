@@ -2152,7 +2152,7 @@ result.Add(new List<int>(current));  // ✓ copy
 .biv-input:focus { border-color:#7c3aed; box-shadow:0 0 8px rgba(124,58,237,0.25); }
 .biv-code-line { padding:4px 14px; font-size:13px; font-family:'JetBrains Mono',monospace; line-height:1.95; color:#7dd3fc; border-left:3px solid transparent; transition:background 0.15s, color 0.15s; }
 .biv-code-line.active { background:#332500; color:#fde68a; border-left-color:#f59e0b; box-shadow:inset 0 0 0 1px rgba(245,158,11,0.2); font-weight:600; }
-.biv-code-line.dim { opacity:0.28; }
+.biv-code-line.dim { opacity:0.7; }
 .biv-app-card { background:#1a2035; border:1px solid #2e3f63; border-radius:12px; padding:16px 18px; transition:border-color 0.15s; }
 .biv-app-card:hover { border-color:#7c3aed; box-shadow:0 0 12px rgba(124,58,237,0.15); }
 .biv-apps-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-top:14px; }
@@ -2890,14 +2890,26 @@ buildSidebar(CONCEPTS);
   ];
   bivCodes.wordsearch = [
     'bool dfs(int r, int c, int k) {',
+    '',
+    '  // base: matched all chars',
     '  if (k == word.Length) return true;',
-    '  if (r<0||r>=rows||c<0||c>=cols) return false;',
+    '',
+    '  // bounds + visited + char check',
+    '  if (r<0 || r>=rows || c<0 || c>=cols) return false;',
+    '  if (board[r][c] == \'#\') return false;  // visited',
     '  if (board[r][c] != word[k]) return false;',
+    '',
+    '  // mark visited',
     '  char tmp = board[r][c];',
-    '  board[r][c] = \'#\'; // mark visited',
-    '  bool found = dfs(r+1,c,k+1) || dfs(r-1,c,k+1)',
-    '             || dfs(r,c+1,k+1) || dfs(r,c-1,k+1);',
-    '  board[r][c] = tmp; // backtrack',
+    '  board[r][c] = \'#\';',
+    '',
+    '  // explore all 4 directions',
+    '  bool found = dfs(r+1, c,   k+1)   // down',
+    '            || dfs(r-1, c,   k+1)   // up',
+    '            || dfs(r,   c+1, k+1)   // right',
+    '            || dfs(r,   c-1, k+1);  // left',
+    '',
+    '  board[r][c] = tmp;  // backtrack: restore cell',
     '  return found;',
     '}'
   ];
@@ -3293,11 +3305,11 @@ buildSidebar(CONCEPTS);
         action: 'Enter dfs(r='+r+', c='+c+', k='+k+') — looking for word['+k+']="'+(word[k]||'—')+'"'
       });
 
-      // k == word.length — line 1
+      // k == word.length — line 3
       frames.push({
         type: 'grid', grid: snap(), path: path.slice(),
         current: word.slice(0, k), results: results.slice(),
-        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 1,
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 3,
         action: 'Check: k('+k+') == word.Length('+word.length+')? ' + (k === word.length ? '✓ YES — found!' : '✗ NO')
       });
       if (k === word.length) {
@@ -3305,83 +3317,84 @@ buildSidebar(CONCEPTS);
         frames.push({
           type: 'grid', grid: snap(), path: path.slice(),
           current: word, results: results.slice(),
-          stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 1,
+          stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 3,
           action: 'FOUND "' + word + '" — all chars matched!'
         });
         found = true;
         return true;
       }
 
-      // bounds check — line 2
+      // bounds check — line 6
       var oob = r < 0 || r >= rows || c < 0 || c >= cols;
       frames.push({
         type: 'grid', grid: snap(), path: path.slice(),
         current: word.slice(0, k), results: results.slice(),
-        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 2,
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 6,
         action: 'Bounds check ('+r+','+c+'): ' + (oob ? '✗ out of bounds — return false' : '✓ in bounds')
       });
       if (oob) return false;
 
-      // char match check — line 3
-      // include current cell in path so it lights up amber while being examined
+      // char match check — lines 7-8
       var examPath = path.concat([[r,c]]);
       var cell = board[r][c];
-      var mismatch = cell === '#' || cell !== word[k];
+      var visited = cell === '#';
+      var mismatch = visited || cell !== word[k];
       frames.push({
         type: 'grid', grid: snap(), path: examPath,
         current: word.slice(0, k), results: results.slice(),
-        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 3,
-        action: 'board['+r+']['+c+']="'+(cell==='#'?'visited':cell)+'" vs word['+k+']="'+word[k]+'": ' + (mismatch ? '✗ no match — return false' : '✓ match!')
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: visited ? 7 : 8,
+        action: 'board['+r+']['+c+']="'+(visited?'# (visited)':cell)+'" vs word['+k+']="'+word[k]+'": ' + (mismatch ? '✗ no match — return false' : '✓ match!')
       });
       if (mismatch) return false;
 
-      // save tmp — line 4
+      // save tmp — line 11
       var tmp = board[r][c];
       frames.push({
         type: 'grid', grid: snap(), path: examPath,
         current: word.slice(0, k+1), results: results.slice(),
-        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 4,
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 11,
         action: 'tmp = board['+r+']['+c+'] = "'+tmp+'" (saved so we can restore later)'
       });
 
-      // mark visited — line 5
+      // mark visited — line 12
       board[r][c] = '#';
       var newPath = path.concat([[r,c]]);
       frames.push({
         type: 'grid', grid: snap(), path: newPath.slice(),
         current: word.slice(0, k+1), results: results.slice(),
-        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 5,
-        action: 'board['+r+']['+c+'] = "#" — marked visited so we don\'t reuse this cell'
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 12,
+        action: 'board['+r+']['+c+'] = "#" — marked visited'
       });
 
-      // explore 4 directions — lines 6-7
+      // explore 4 directions — lines 15-18
       var dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+      var dirLines = [15, 16, 17, 18];
       var res = false;
       for (var d = 0; d < dirs.length; d++) {
         var nr = dirs[d][0] + r, nc = dirs[d][1] + c;
         frames.push({
           type: 'grid', grid: snap(), path: newPath.slice(),
           current: word.slice(0, k+1), results: results.slice(),
-          stack: myStack, aux: aux, auxLabel: 'char index', codeLine: d < 2 ? 6 : 7,
+          stack: myStack, aux: aux, auxLabel: 'char index', codeLine: dirLines[d],
           action: 'Try '+dirNames[d]+' → dfs('+nr+','+nc+','+(k+1)+')'
         });
         if (dfs(nr, nc, k + 1, newPath, myStack)) { res = true; break; }
       }
 
-      // restore — line 8
+      // restore — line 20
       board[r][c] = tmp;
       frames.push({
         type: 'grid', grid: snap(), path: path.slice(),
         current: word.slice(0, k), results: results.slice(),
-        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 8,
-        action: 'BACKTRACK — restore board['+r+']['+c+']="'+tmp+'", unmark cell'
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 20,
+        action: 'BACKTRACK — restore board['+r+']['+c+']="'+tmp+'"'
       });
 
-      // return — line 9
+      // return — line 21
       frames.push({
         type: 'grid', grid: snap(), path: path.slice(),
         current: word.slice(0, k), results: results.slice(),
-        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 9,
+        stack: myStack, aux: aux, auxLabel: 'char index', codeLine: 21,
         action: 'return ' + res
       });
       return res;
