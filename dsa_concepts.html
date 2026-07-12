@@ -2513,195 +2513,6 @@ Sorting is O(n log n). The heap approach is O(n log k), which is faster when k i
   <div id="topk-result-items"></div>
 </div>
 
-<script>
-(function(){
-  var tkFrames = [], tkIdx = 0, tkTimer = null;
-
-  var CODE = [
-    '// Phase 1: count each element',
-    'freqMap[n] = freqMap.GetValueOrDefault(n) + 1;',
-    '// Phase 2: place into buckets by frequency',
-    'buckets[kvp.Value - 1] ??= new List<int>();',
-    'buckets[kvp.Value - 1].Add(kvp.Key);',
-    '// Phase 3: collect from highest freq bucket',
-    'if (bucket == null) continue;',
-    'if (resultList.Count == k) break;',
-    'resultList.Add(bucket[j]);',
-  ];
-
-  function buildFrames(nums, k) {
-    var frames = [];
-    var fm = {}, bkts = new Array(nums.length).fill(null), res = [];
-
-    function snap(b) { return b.map(function(x){return x?x.slice():null;}); }
-    function fmSnap() { var o={}; for(var kk in fm) o[kk]=fm[kk]; return o; }
-
-    frames.push({phase:1,desc:'Start — iterate array to count frequencies',activeArr:-1,fm:{},activeFm:-1,bkts:snap(bkts),activeBkt:-1,res:[],code:0});
-
-    for (var i = 0; i < nums.length; i++) {
-      fm[nums[i]] = (fm[nums[i]]||0)+1;
-      frames.push({phase:1,desc:'nums['+i+']='+nums[i]+' → freqMap['+nums[i]+']='+fm[nums[i]],activeArr:i,fm:fmSnap(),activeFm:nums[i],bkts:snap(bkts),activeBkt:-1,res:[],code:1});
-    }
-
-    frames.push({phase:2,desc:'FreqMap done — now fill buckets. bucket[freq-1] holds all numbers with that frequency',activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:-1,res:[],code:2});
-
-    for (var key in fm) {
-      var freq = fm[key], num = parseInt(key);
-      frames.push({phase:2,desc:'freqMap['+key+']='+freq+' → allocate bucket['+(freq-1)+'] if needed',activeArr:-1,fm:fmSnap(),activeFm:num,bkts:snap(bkts),activeBkt:freq-1,res:[],code:3});
-      if (!bkts[freq-1]) bkts[freq-1]=[];
-      bkts[freq-1].push(num);
-      frames.push({phase:2,desc:'bucket['+(freq-1)+'].Add('+key+') — num '+key+' appears '+freq+' time(s)',activeArr:-1,fm:fmSnap(),activeFm:num,bkts:snap(bkts),activeBkt:freq-1,res:[],code:4});
-    }
-
-    frames.push({phase:3,desc:'Buckets ready — iterate from the end (highest freq) to collect top '+k,activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:-1,res:[],code:5});
-
-    for (var i = bkts.length-1; i >= 0; i--) {
-      if (res.length===k) break;
-      if (!bkts[i]) {
-        frames.push({phase:3,desc:'bucket['+i+'] is empty — skip',activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:i,res:res.slice(),code:6});
-        continue;
-      }
-      for (var j = 0; j < bkts[i].length; j++) {
-        if (res.length===k) { frames.push({phase:3,desc:'result.Count==k='+k+' — done!',activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:i,res:res.slice(),code:7}); break; }
-        res.push(bkts[i][j]);
-        frames.push({phase:3,desc:'result.Add('+bkts[i][j]+') → ['+res.join(',')+']'+(res.length===k?' ✓ Got '+k+'!':''),activeArr:-1,fm:fmSnap(),activeFm:-1,bkts:snap(bkts),activeBkt:i,res:res.slice(),code:8});
-      }
-    }
-    return frames;
-  }
-
-  function render(idx) {
-    var f = tkFrames[idx];
-    if (!f) return;
-    tkIdx = idx;
-
-    // phase badge
-    var ph = document.getElementById('topk-phase');
-    ph.textContent = 'Phase '+f.phase;
-    ph.className = 'p'+f.phase;
-    document.getElementById('topk-desc').textContent = f.desc;
-    document.getElementById('topk-counter').textContent = (idx+1)+' / '+tkFrames.length;
-
-    // array
-    var arrEl = document.getElementById('topk-array');
-    arrEl.querySelectorAll('.topk-cell').forEach(function(c,i){
-      c.className = 'topk-cell' + (i===f.activeArr?' active':(i<f.activeArr||f.activeArr===-1&&f.phase>1)?' done':'');
-    });
-
-    // freqmap
-    var fmEl = document.getElementById('topk-freqmap');
-    fmEl.innerHTML = '';
-    for (var kk in f.fm) {
-      var e = document.createElement('div');
-      e.className = 'topk-fm-entry'+(parseInt(kk)===f.activeFm?' active':'');
-      e.innerHTML = '<span class="fm-key">'+kk+'</span><span class="fm-val">×'+f.fm[kk]+'</span>';
-      fmEl.appendChild(e);
-    }
-    if (!Object.keys(f.fm).length) fmEl.innerHTML = '<span style="color:#334155;font-size:12px">empty</span>';
-
-    // buckets
-    var bkEl = document.getElementById('topk-buckets');
-    bkEl.innerHTML = '';
-    var hasAny = f.bkts.some(function(b){return b&&b.length;});
-    if (!hasAny) { bkEl.innerHTML = '<span style="color:#334155;font-size:12px">empty</span>'; }
-    else {
-      for (var i = 0; i < f.bkts.length; i++) {
-        var b = f.bkts[i];
-        if (!b || !b.length) continue;
-        var isActive = i===f.activeBkt;
-        var inResult = f.res.some(function(r){return b.indexOf(r)!==-1;});
-        var row = document.createElement('div');
-        row.className = 'topk-bucket-row'+(isActive?' active':inResult?' result':'');
-        var lbl = document.createElement('span');
-        lbl.className = 'topk-bucket-label';
-        lbl.textContent = 'freq='+(i+1)+':';
-        var cells = document.createElement('div');
-        cells.className = 'topk-bucket-cells';
-        b.forEach(function(n){
-          var c = document.createElement('span');
-          c.className = 'topk-bucket-cell';
-          c.textContent = n;
-          cells.appendChild(c);
-        });
-        row.appendChild(lbl);
-        row.appendChild(cells);
-        bkEl.appendChild(row);
-      }
-    }
-
-    // code
-    var codeEl = document.getElementById('topk-code');
-    codeEl.innerHTML = CODE.map(function(line,i){
-      var cls = 'topk-code-line'+(i===f.code?' active':'');
-      return '<div class="'+cls+'">'+line+'</div>';
-    }).join('');
-
-    // result
-    var resEl = document.getElementById('topk-result');
-    var resItems = document.getElementById('topk-result-items');
-    if (f.res.length) {
-      resEl.style.display='flex';
-      resItems.innerHTML = f.res.map(function(n){return '<span class="topk-result-cell">'+n+'</span>';}).join('');
-    } else { resEl.style.display='none'; }
-
-    // buttons
-    document.getElementById('topk-prev').disabled = idx===0;
-    document.getElementById('topk-next').disabled = idx===tkFrames.length-1;
-  }
-
-  function initArray(nums) {
-    var arrEl = document.getElementById('topk-array');
-    arrEl.innerHTML = '';
-    nums.forEach(function(n){
-      var c = document.createElement('div');
-      c.className = 'topk-cell';
-      c.textContent = n;
-      arrEl.appendChild(c);
-    });
-  }
-
-  window.topkBuild = function() {
-    topkStopPlay();
-    var raw = document.getElementById('topk-input').value.replace(/[\\[\\]]/g,'');
-    var nums = raw.split(',').map(function(s){return parseInt(s.trim());}).filter(function(n){return !isNaN(n);});
-    var k = parseInt(document.getElementById('topk-k').value)||2;
-    if (!nums.length) return;
-    tkFrames = buildFrames(nums, k);
-    tkIdx = 0;
-    initArray(nums);
-    document.getElementById('topk-stepbar').style.display='flex';
-    document.getElementById('topk-body').style.display='grid';
-    document.getElementById('topk-result').style.display='none';
-    render(0);
-  };
-
-  window.topkStep = function(dir) {
-    var next = Math.max(0,Math.min(tkFrames.length-1,tkIdx+dir));
-    render(next);
-  };
-
-  window.topkTogglePlay = function() {
-    var btn = document.getElementById('topk-play');
-    if (tkTimer) { topkStopPlay(); return; }
-    btn.textContent='⏸ Pause';
-    var go = function(){
-      if (tkIdx>=tkFrames.length-1){topkStopPlay();return;}
-      topkStep(1);
-      tkTimer=setTimeout(go,600);
-    };
-    tkTimer=setTimeout(go,100);
-  };
-
-  function topkStopPlay(){
-    if(tkTimer){clearTimeout(tkTimer);tkTimer=null;}
-    var btn=document.getElementById('topk-play');
-    if(btn)btn.textContent='▶ Play';
-  }
-
-  // auto-build on load
-  setTimeout(window.topkBuild, 100);
-})();
-</script>
 </div>`
   }
 ];
@@ -2795,6 +2606,9 @@ function selectConcept(id) {
         root.dataset.bivInit = '1';
         window.bivRebuild();
       }
+      // topk: mark init (user clicks Visualize to start)
+      var topkRoot = document.getElementById('topk-root');
+      if (topkRoot) topkRoot.dataset.topkInit = '1';
     }, 50);
   } else {
     content.innerHTML = marked.parse(concept.content);
@@ -4244,6 +4058,321 @@ buildSidebar(CONCEPTS);
     }
   });
   bivObs.observe(document.body, { childList: true, subtree: true });
+
+})();
+</script>
+
+<script>
+// ── TOP K FREQUENT ELEMENTS VISUALIZER ────────────────────────────────────────
+(function() {
+  var frames = [];
+  var frameIdx = 0;
+  var playTimer = null;
+
+  var CODE_LINES = [
+    'public int[] TopKFrequent(int[] nums, int k) {',
+    '  // Phase 1: build frequency map',
+    '  var freq = new Dictionary<int,int>();',
+    '  foreach (var n in nums)',
+    '    freq[n] = freq.GetValueOrDefault(n, 0) + 1;',
+    '',
+    '  // Phase 2: bucket sort by frequency',
+    '  var buckets = new List<int>[nums.Length];',
+    '  foreach (var kv in freq) {',
+    '    int f = kv.Value;',
+    '    if (buckets[f-1] == null) buckets[f-1] = new List<int>();',
+    '    buckets[f-1].Add(kv.Key);',
+    '  }',
+    '',
+    '  // Phase 3: collect top k from highest freq bucket',
+    '  var result = new List<int>();',
+    '  for (int i = buckets.Length-1; i >= 0 && result.Count < k; i--)',
+    '    if (buckets[i] != null)',
+    '      foreach (var x in buckets[i]) {',
+    '        result.Add(x);',
+    '        if (result.Count == k) break;',
+    '      }',
+    '  return result.ToArray();',
+    '}'
+  ];
+
+  function buildFrames(nums, k) {
+    var fs = [];
+    var freq = {};
+    var buckets = new Array(nums.length).fill(null).map(function() { return []; });
+
+    function snap(phase, desc, codeLine, activeArr, activeFreq, activeBucket, result) {
+      fs.push({
+        phase: phase,
+        desc: desc,
+        codeLine: codeLine,
+        activeArr: activeArr !== undefined ? activeArr : -1,
+        doneArr: activeArr !== undefined ? activeArr : -1,
+        freqSnap: JSON.parse(JSON.stringify(freq)),
+        activeFreq: activeFreq !== undefined ? activeFreq : null,
+        bucketsSnap: JSON.parse(JSON.stringify(buckets)),
+        activeBucket: activeBucket !== undefined ? activeBucket : -1,
+        result: result || null,
+        // track which array indices are "done" (already counted)
+        doneCount: 0
+      });
+    }
+
+    // Track done array indices
+    var doneSet = [];
+
+    function snapFull(phase, desc, codeLine, activeArr, activeFreq, activeBucket, result) {
+      fs.push({
+        phase: phase,
+        desc: desc,
+        codeLine: codeLine,
+        activeArr: activeArr !== undefined ? activeArr : -1,
+        activeFreq: activeFreq !== null ? activeFreq : null,
+        freqSnap: JSON.parse(JSON.stringify(freq)),
+        bucketsSnap: JSON.parse(JSON.stringify(buckets)),
+        activeBucket: activeBucket !== undefined ? activeBucket : -1,
+        doneArr: doneSet.slice(),
+        result: result || null
+      });
+    }
+
+    // Start
+    snapFull(1, 'Start: build frequency map by iterating nums', 2, -1, null, -1);
+
+    // Phase 1: build freq map
+    for (var i = 0; i < nums.length; i++) {
+      var n = nums[i];
+      snapFull(1, 'Visiting nums[' + i + '] = ' + n, 3, i, null, -1);
+      if (freq[n] === undefined) freq[n] = 0;
+      freq[n]++;
+      doneSet.push(i);
+      snapFull(1, 'freq[' + n + '] = ' + freq[n], 4, i, n, -1);
+    }
+    snapFull(1, 'Frequency map complete', 4, -1, null, -1);
+
+    // Phase 2: bucket sort
+    snapFull(2, 'Phase 2: place each element into bucket[freq-1]', 7, -1, null, -1);
+    var freqKeys = Object.keys(freq);
+    for (var fi = 0; fi < freqKeys.length; fi++) {
+      var key = parseInt(freqKeys[fi]);
+      var f = freq[key];
+      var bidx = f - 1;
+      snapFull(2, 'freq[' + key + '] = ' + f + ' → buckets[' + bidx + '].Add(' + key + ')', 9, -1, key, -1);
+      buckets[bidx].push(key);
+      snapFull(2, 'Added ' + key + ' to buckets[' + bidx + ']', 11, -1, key, bidx);
+    }
+    snapFull(2, 'Bucket sort complete', 12, -1, null, -1);
+
+    // Phase 3: collect top k
+    snapFull(3, 'Phase 3: scan buckets from high freq → low, collect k elements', 16, -1, null, -1);
+    var result = [];
+    for (var bi = buckets.length - 1; bi >= 0 && result.length < k; bi--) {
+      if (buckets[bi].length === 0) continue;
+      snapFull(3, 'Checking buckets[' + bi + '] (freq = ' + (bi+1) + '): ' + JSON.stringify(buckets[bi]), 17, -1, null, bi);
+      for (var ri = 0; ri < buckets[bi].length && result.length < k; ri++) {
+        result.push(buckets[bi][ri]);
+        snapFull(3, 'Collected ' + buckets[bi][ri] + ' → result = ' + JSON.stringify(result), 19, -1, null, bi, result.slice());
+      }
+    }
+    snapFull(3, 'Done! Top ' + k + ' frequent elements: ' + JSON.stringify(result), 22, -1, null, -1, result.slice());
+
+    return fs;
+  }
+
+  function render(frame) {
+    var nums = getInput();
+    if (!nums) return;
+
+    // Phase badge
+    var phaseEl = document.getElementById('topk-phase');
+    if (phaseEl) {
+      var labels = {1:'Phase 1: Freq Map', 2:'Phase 2: Buckets', 3:'Phase 3: Collect'};
+      phaseEl.textContent = labels[frame.phase] || 'Phase ' + frame.phase;
+      phaseEl.className = 'p' + frame.phase;
+    }
+
+    // Description
+    var descEl = document.getElementById('topk-desc');
+    if (descEl) descEl.textContent = frame.desc;
+
+    // Counter
+    var ctrEl = document.getElementById('topk-counter');
+    if (ctrEl) ctrEl.textContent = (frameIdx + 1) + ' / ' + frames.length;
+
+    // Array
+    var arrEl = document.getElementById('topk-array');
+    if (arrEl) {
+      arrEl.innerHTML = '';
+      nums.forEach(function(v, i) {
+        var cell = document.createElement('div');
+        cell.className = 'topk-cell';
+        if (i === frame.activeArr) cell.classList.add('active');
+        else if (frame.doneArr && frame.doneArr.indexOf(i) >= 0) cell.classList.add('done');
+        cell.textContent = v;
+        arrEl.appendChild(cell);
+      });
+    }
+
+    // Freq map
+    var fmEl = document.getElementById('topk-freqmap');
+    if (fmEl) {
+      fmEl.innerHTML = '';
+      Object.keys(frame.freqSnap).forEach(function(k) {
+        var entry = document.createElement('div');
+        entry.className = 'topk-fm-entry';
+        if (frame.activeFreq !== null && String(frame.activeFreq) === String(k)) entry.classList.add('active');
+        entry.innerHTML = '<span class="fm-key">' + k + '</span><span class="fm-val">×' + frame.freqSnap[k] + '</span>';
+        fmEl.appendChild(entry);
+      });
+    }
+
+    // Buckets
+    var bkEl = document.getElementById('topk-buckets');
+    if (bkEl) {
+      bkEl.innerHTML = '';
+      frame.bucketsSnap.forEach(function(bucket, i) {
+        var row = document.createElement('div');
+        row.className = 'topk-bucket-row';
+        if (i === frame.activeBucket) row.classList.add('active');
+        if (frame.result && frame.activeBucket === i) row.classList.add('result');
+        var isResultBucket = frame.result && frame.activeBucket === i;
+        var label = document.createElement('div');
+        label.className = 'topk-bucket-label';
+        label.textContent = 'freq ' + (i+1) + ':';
+        row.appendChild(label);
+        var cells = document.createElement('div');
+        cells.className = 'topk-bucket-cells';
+        if (bucket.length === 0) {
+          var empty = document.createElement('span');
+          empty.style.cssText = 'color:#334155;font-size:12px;font-style:italic';
+          empty.textContent = '(empty)';
+          cells.appendChild(empty);
+        } else {
+          bucket.forEach(function(v) {
+            var cell = document.createElement('div');
+            cell.className = 'topk-bucket-cell';
+            cell.textContent = v;
+            cells.appendChild(cell);
+          });
+        }
+        row.appendChild(cells);
+        bkEl.appendChild(row);
+      });
+    }
+
+    // Code
+    var codeEl = document.getElementById('topk-code');
+    if (codeEl) {
+      codeEl.innerHTML = '';
+      CODE_LINES.forEach(function(line, i) {
+        var div = document.createElement('div');
+        div.className = 'topk-code-line';
+        if (i === frame.codeLine) div.classList.add('active');
+        div.textContent = line || '\u00a0';
+        codeEl.appendChild(div);
+      });
+    }
+
+    // Result
+    var resultEl = document.getElementById('topk-result');
+    var resultItems = document.getElementById('topk-result-items');
+    if (frame.result && frame.result.length > 0) {
+      if (resultEl) resultEl.style.display = 'flex';
+      if (resultItems) {
+        resultItems.innerHTML = '';
+        frame.result.forEach(function(v) {
+          var cell = document.createElement('div');
+          cell.className = 'topk-result-cell';
+          cell.textContent = v;
+          resultItems.appendChild(cell);
+        });
+      }
+    } else {
+      if (resultEl) resultEl.style.display = 'none';
+    }
+
+    // Buttons
+    var prevBtn = document.getElementById('topk-prev');
+    var nextBtn = document.getElementById('topk-next');
+    if (prevBtn) prevBtn.disabled = frameIdx <= 0;
+    if (nextBtn) nextBtn.disabled = frameIdx >= frames.length - 1;
+  }
+
+  function getInput() {
+    var inputEl = document.getElementById('topk-input');
+    var kEl = document.getElementById('topk-k');
+    if (!inputEl || !kEl) return null;
+    var nums = inputEl.value.split(',').map(function(s) { return parseInt(s.trim()); }).filter(function(n) { return !isNaN(n); });
+    if (nums.length === 0) return null;
+    return nums;
+  }
+
+  function topkBuild() {
+    topkStopPlay();
+    var nums = getInput();
+    var kEl = document.getElementById('topk-k');
+    if (!nums || !kEl) return;
+    var k = parseInt(kEl.value) || 2;
+    k = Math.max(1, Math.min(k, nums.length));
+
+    frames = buildFrames(nums, k);
+    frameIdx = 0;
+
+    var stepbar = document.getElementById('topk-stepbar');
+    var body = document.getElementById('topk-body');
+    var resultEl = document.getElementById('topk-result');
+    if (stepbar) stepbar.style.display = 'flex';
+    if (body) body.style.display = 'grid';
+    if (resultEl) resultEl.style.display = 'none';
+
+    render(frames[0]);
+  }
+
+  function topkStep(dir) {
+    var newIdx = frameIdx + dir;
+    if (newIdx < 0 || newIdx >= frames.length) return;
+    frameIdx = newIdx;
+    render(frames[frameIdx]);
+  }
+
+  function topkTogglePlay() {
+    if (playTimer) {
+      topkStopPlay();
+    } else {
+      var playBtn = document.getElementById('topk-play');
+      if (playBtn) playBtn.textContent = '⏸ Pause';
+      playTimer = setInterval(function() {
+        if (frameIdx >= frames.length - 1) {
+          topkStopPlay();
+          return;
+        }
+        frameIdx++;
+        render(frames[frameIdx]);
+      }, 700);
+    }
+  }
+
+  function topkStopPlay() {
+    if (playTimer) { clearInterval(playTimer); playTimer = null; }
+    var playBtn = document.getElementById('topk-play');
+    if (playBtn) playBtn.textContent = '▶ Play';
+  }
+
+  // Expose globals
+  window.topkBuild = topkBuild;
+  window.topkStep = topkStep;
+  window.topkTogglePlay = topkTogglePlay;
+  window.topkStopPlay = topkStopPlay;
+
+  // Auto-init when #topk-root appears in DOM
+  var topkObs = new MutationObserver(function() {
+    var root = document.getElementById('topk-root');
+    if (root && !root.dataset.topkInit) {
+      root.dataset.topkInit = '1';
+      // Don't auto-run — wait for user to click Visualize
+    }
+  });
+  topkObs.observe(document.body, { childList: true, subtree: true });
 
 })();
 </script>
