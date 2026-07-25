@@ -2514,6 +2514,275 @@ Sorting is O(n log n). The heap approach is O(n log k), which is faster when k i
 </div>
 
 </div>`
+  },
+  {
+    id: "kth-visualizer",
+    name: "LC 215 — Kth Largest Visualizer",
+    icon: "🏔",
+    category: "Algorithms",
+    tag: "algo",
+    content: `<div id="kth-root" style="font-family:'Inter',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;padding:24px;min-height:100vh">
+<style>
+#kth-root * { box-sizing:border-box; }
+#kth-controls { display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap; }
+#kth-controls label { font-size:12px;color:#64748b; }
+#kth-controls input { background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:13px;width:220px; }
+#kth-controls input.small { width:60px; }
+.kth-btn { padding:6px 16px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;transition:all 0.15s; }
+.kth-btn:hover { border-color:#7c3aed;color:#a78bfa; }
+.kth-btn:disabled { opacity:0.3;cursor:not-allowed; }
+.kth-btn.primary { background:#7c3aed;border-color:#7c3aed;color:#fff; }
+.kth-btn.primary:hover { background:#6d28d9; }
+#kth-stepbar { display:flex;align-items:center;gap:10px;margin-bottom:16px;background:#1e293b;border-radius:10px;padding:10px 16px;flex-wrap:wrap; }
+#kth-desc { flex:1;font-size:13px;color:#e2e8f0;min-width:200px; }
+#kth-counter { font-size:11px;color:#64748b;white-space:nowrap; }
+.kth-phase { font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap; }
+.kth-phase.p1 { background:rgba(59,130,246,0.15);color:#60a5fa; }
+.kth-phase.p2 { background:rgba(34,197,94,0.15);color:#4ade80; }
+#kth-body { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px; }
+.kth-panel { background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px; }
+.kth-panel h4 { margin:0 0 10px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b; }
+#kth-left { display:flex;flex-direction:column;gap:12px; }
+#kth-right { display:flex;flex-direction:column;gap:12px; }
+#kth-array { display:flex;flex-wrap:wrap;gap:6px; }
+.kth-cell { width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;border:2px solid #334155;background:#0f1117;color:#71717a;transition:all 0.2s; }
+.kth-cell.active { background:#1c1400;border-color:#fbbf24;color:#fbbf24; }
+.kth-cell.done { background:#16122a;border-color:#7c3aed;color:#a78bfa; }
+#kth-code { font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8; }
+.kth-code-line { padding:2px 8px;border-radius:4px;border-left:3px solid transparent;color:#94a3b8;white-space:pre;font-family:'JetBrains Mono',monospace; }
+.kth-code-line.active { background:#332500;color:#fde68a;border-left-color:#f59e0b;font-weight:600; }
+.kth-heap-item { padding:6px 12px;margin-bottom:4px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;border:1px solid #334155;background:#0f1117;color:#94a3b8;transition:all 0.2s; }
+.kth-heap-item.min-item { border-color:#7c3aed;background:#16122a;color:#a78bfa; }
+.kth-heap-item.removing { border-color:#ef4444;background:#2d0a0a;color:#f87171; }
+#kth-stats { font-size:12px;color:#64748b;margin-top:8px; }
+#kth-result { background:#0a1f14;border:1px solid #22c55e;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px; }
+#kth-result-label { font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:0.08em; }
+#kth-result-val { font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#4ade80; }
+#kth-result-note { font-size:12px;color:#4ade80;opacity:0.7; }
+</style>
+
+<h2 style="margin:0 0 4px 0;font-size:20px">🏔 LC 215 — Kth Largest Element in an Array</h2>
+<p style="color:#64748b;font-size:13px;margin:0 0 20px 0">Min-heap of size k: add each element, trim when size &gt; k. Answer = heap.Peek()</p>
+
+<div id="kth-controls">
+  <div><label>Array</label><br><input id="kth-input" value="3,2,1,5,6,4"></div>
+  <div><label>k</label><br><input id="kth-k" class="small" value="2"></div>
+  <button class="kth-btn primary" onclick="kthBuild()">▶ Visualize</button>
+</div>
+
+<div id="kth-stepbar" style="display:none">
+  <button class="kth-btn" id="kth-prev" onclick="kthStep(-1)">← Prev</button>
+  <button class="kth-btn" id="kth-play" onclick="kthTogglePlay()">▶ Play</button>
+  <button class="kth-btn" id="kth-next" onclick="kthStep(1)">Next →</button>
+  <span id="kth-phase" class="kth-phase p1">Scan</span>
+  <span id="kth-desc">—</span>
+  <span id="kth-counter">1 / 1</span>
+  <button class="kth-btn" onclick="kthBuild()" style="margin-left:auto">↺ Reset</button>
+</div>
+
+<div id="kth-body" style="display:none">
+  <div id="kth-left">
+    <div class="kth-panel">
+      <h4>Input Array</h4>
+      <div id="kth-array"></div>
+    </div>
+    <div class="kth-panel" style="background:#0f1117;border-color:#1e293b">
+      <h4>Code</h4>
+      <div id="kth-code"></div>
+    </div>
+  </div>
+  <div id="kth-right">
+    <div class="kth-panel">
+      <h4>Min-Heap Tree (k = <span id="kth-kval">2</span>)</h4>
+      <div id="kth-heap-viz" style="min-height:80px;display:flex;align-items:center;justify-content:center"></div>
+      <div id="kth-stats"></div>
+    </div>
+    <div class="kth-panel">
+      <h4>Heap Contents (min at top)</h4>
+      <div id="kth-heap-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="kth-result" style="display:none">
+  <span id="kth-result-label">Answer</span>
+  <span id="kth-result-val"></span>
+  <span id="kth-result-note"></span>
+</div>
+
+</div>`
+  },
+  {
+    id: "sort-colors-viz",
+    name: "LC 75 — Sort Colors Visualizer",
+    icon: "🎨",
+    category: "Algorithms",
+    tag: "algo",
+    content: `<div id="sc-root" style="font-family:'Inter',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;padding:24px;min-height:100vh">
+<style>
+#sc-root * { box-sizing:border-box; }
+#sc-controls { display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap; }
+#sc-controls label { font-size:12px;color:#64748b; }
+#sc-controls input { background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:13px;width:220px; }
+#sc-controls button { padding:6px 14px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s; }
+.sc-btn-step { background:#7c3aed;color:#fff; }
+.sc-btn-step:hover { background:#6d28d9; }
+.sc-btn-run { background:#059669;color:#fff; }
+.sc-btn-run:hover { background:#047857; }
+.sc-btn-reset { background:#334155;color:#e2e8f0; }
+.sc-btn-reset:hover { background:#475569; }
+
+#sc-main-grid { display:grid;grid-template-columns:1fr 340px;gap:20px;margin-top:16px; }
+@media (max-width:800px) { #sc-main-grid { grid-template-columns:1fr; } }
+
+#sc-array-container { display:flex;gap:6px;align-items:flex-end;margin:16px 0 8px 0;min-height:80px;justify-content:center; }
+.sc-cell { width:52px;text-align:center;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;padding:14px 0;transition:all 0.3s ease; }
+.sc-cell-0 { background:#ef4444;color:#fff; }
+.sc-cell-1 { background:#f5f5f5;color:#1e293b; }
+.sc-cell-2 { background:#3b82f6;color:#fff; }
+.sc-cell.sc-swapping { transform:scale(1.15);box-shadow:0 0 12px rgba(255,255,255,0.3); }
+
+#sc-pointers { display:flex;gap:6px;justify-content:center;margin-bottom:16px; }
+.sc-ptr { width:52px;text-align:center;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace; }
+.sc-ptr-low { color:#22c55e; }
+.sc-ptr-mid { color:#eab308; }
+.sc-ptr-high { color:#f97316; }
+
+#sc-legend { display:flex;gap:16px;margin-bottom:12px;justify-content:center; }
+.sc-legend-item { display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8; }
+.sc-legend-swatch { width:14px;height:14px;border-radius:3px; }
+
+#sc-code-panel { background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px 0;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow:hidden; }
+.sc-code-line { padding:2px 14px;border-left:3px solid transparent;color:#94a3b8;white-space:pre; }
+.sc-code-line.active { background:#332500;color:#fde68a;border-left-color:#f59e0b;font-weight:600; }
+
+#sc-log { background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#94a3b8;max-height:180px;overflow-y:auto;white-space:pre-line; }
+
+#sc-invariant { background:#1a2035;border:1px solid #2e3f63;border-radius:8px;padding:12px 16px;font-size:13px;color:#cbd5e1;line-height:1.6; }
+#sc-invariant code { background:#334155;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px; }
+
+#sc-explanation { background:#1a2035;border:1px solid #2e3f63;border-radius:8px;padding:12px 16px;font-size:13px;color:#e2e8f0;line-height:1.6;min-height:48px; }
+</style>
+
+<h2 style="font-size:22px;font-weight:700;background:linear-gradient(135deg,#ef4444,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">LC 75 — Sort Colors (Dutch National Flag)</h2>
+<p style="color:#94a3b8;font-size:14px;margin-bottom:16px">Step through the algorithm — watch low, mid, high pointers and code highlight in sync.</p>
+
+<div id="sc-controls">
+  <label>Array:</label>
+  <input id="sc-input" value="2,0,2,1,1,0" placeholder="e.g. 2,0,2,1,1,0">
+  <button class="sc-btn-reset" onclick="scReset()">Reset</button>
+  <button class="sc-btn-step" onclick="scStep()">Step</button>
+  <button class="sc-btn-run" onclick="scRunAll()">Run All</button>
+</div>
+
+<div id="sc-legend">
+  <div class="sc-legend-item"><div class="sc-legend-swatch" style="background:#ef4444"></div>0 (Red)</div>
+  <div class="sc-legend-item"><div class="sc-legend-swatch" style="background:#f5f5f5"></div>1 (White)</div>
+  <div class="sc-legend-item"><div class="sc-legend-swatch" style="background:#3b82f6"></div>2 (Blue)</div>
+  <div class="sc-legend-item"><div class="sc-legend-swatch" style="background:#22c55e;width:10px;height:10px;border-radius:50%"></div>low</div>
+  <div class="sc-legend-item"><div class="sc-legend-swatch" style="background:#eab308;width:10px;height:10px;border-radius:50%"></div>mid</div>
+  <div class="sc-legend-item"><div class="sc-legend-swatch" style="background:#f97316;width:10px;height:10px;border-radius:50%"></div>high</div>
+</div>
+
+<div id="sc-main-grid">
+  <div>
+    <div id="sc-array-container"></div>
+    <div id="sc-pointers"></div>
+    <div id="sc-invariant"></div>
+    <div id="sc-explanation" style="margin-top:12px"></div>
+    <div id="sc-log" style="margin-top:12px"></div>
+  </div>
+  <div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:6px;font-weight:600">Code <span style="background:#334155;color:#94a3b8;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:4px">C#</span></div>
+    <div id="sc-code-panel"></div>
+  </div>
+</div>
+
+</div>`
+  },
+  {
+    id: "remove-dups-viz",
+    name: "LC 26 — Remove Duplicates Visualizer",
+    icon: "✂️",
+    category: "Algorithms",
+    tag: "algo",
+    content: `<div id="rd-root" style="font-family:'Inter',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;padding:24px;min-height:100vh">
+<style>
+#rd-root * { box-sizing:border-box; }
+#rd-controls { display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap; }
+#rd-controls label { font-size:12px;color:#64748b; }
+#rd-controls input { background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:13px;width:260px; }
+#rd-controls button { padding:6px 14px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s; }
+.rd-btn-step { background:#7c3aed;color:#fff; }
+.rd-btn-step:hover { background:#6d28d9; }
+.rd-btn-run { background:#059669;color:#fff; }
+.rd-btn-run:hover { background:#047857; }
+.rd-btn-reset { background:#334155;color:#e2e8f0; }
+.rd-btn-reset:hover { background:#475569; }
+
+#rd-main-grid { display:grid;grid-template-columns:1fr 340px;gap:20px;margin-top:16px; }
+@media (max-width:800px) { #rd-main-grid { grid-template-columns:1fr; } }
+
+#rd-array-container { display:flex;gap:6px;align-items:flex-end;margin:16px 0 8px 0;min-height:70px;justify-content:center; }
+.rd-cell { width:52px;text-align:center;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;padding:14px 0;border:2px solid #334155;background:#0f1117;color:#71717a;transition:all 0.3s ease; }
+.rd-cell.unique { border-color:#7c3aed;background:#16122a;color:#a78bfa; }
+.rd-cell.reading { border-color:#fbbf24;background:#1c1400;color:#fbbf24; }
+.rd-cell.writing { border-color:#22c55e;background:#0a1f14;color:#4ade80; }
+.rd-cell.garbage { opacity:0.3; }
+
+#rd-pointers { display:flex;gap:6px;justify-content:center;margin-bottom:16px; }
+.rd-ptr { width:52px;text-align:center;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace; }
+.rd-ptr-w { color:#22c55e; }
+.rd-ptr-r { color:#fbbf24; }
+
+#rd-legend { display:flex;gap:16px;margin-bottom:12px;justify-content:center; }
+.rd-legend-item { display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8; }
+.rd-legend-swatch { width:14px;height:14px;border-radius:3px; }
+
+#rd-code-panel { background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px 0;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow:hidden; }
+.rd-code-line { padding:2px 14px;border-left:3px solid transparent;color:#94a3b8;white-space:pre; }
+.rd-code-line.active { background:#332500;color:#fde68a;border-left-color:#f59e0b;font-weight:600; }
+
+#rd-log { background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#94a3b8;max-height:180px;overflow-y:auto;white-space:pre-line; }
+
+#rd-status { background:#1a2035;border:1px solid #2e3f63;border-radius:8px;padding:12px 16px;font-size:13px;color:#e2e8f0;line-height:1.6;min-height:48px; }
+
+#rd-explanation { background:#1a2035;border:1px solid #2e3f63;border-radius:8px;padding:12px 16px;font-size:13px;color:#cbd5e1;line-height:1.6;margin-top:12px; }
+</style>
+
+<h2 style="font-size:22px;font-weight:700;background:linear-gradient(135deg,#22c55e,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">LC 26 — Remove Duplicates from Sorted Array</h2>
+<p style="color:#94a3b8;font-size:14px;margin-bottom:16px">Two pointers: <span style="color:#22c55e">w</span> = writer (last unique placed), <span style="color:#fbbf24">r</span> = reader (scout scanning ahead)</p>
+
+<div id="rd-controls">
+  <label>Sorted Array:</label>
+  <input id="rd-input" value="0,0,1,1,1,2,2,3,3,4" placeholder="e.g. 0,0,1,1,1,2,2,3,3,4">
+  <button class="rd-btn-reset" onclick="rdReset()">Reset</button>
+  <button class="rd-btn-step" onclick="rdStep()">Step</button>
+  <button class="rd-btn-run" onclick="rdRunAll()">Run All</button>
+</div>
+
+<div id="rd-legend">
+  <div class="rd-legend-item"><div class="rd-legend-swatch" style="background:#7c3aed"></div>Unique (placed)</div>
+  <div class="rd-legend-item"><div class="rd-legend-swatch" style="background:#fbbf24"></div>Reading</div>
+  <div class="rd-legend-item"><div class="rd-legend-swatch" style="background:#22c55e"></div>Writing</div>
+  <div class="rd-legend-item"><div class="rd-legend-swatch" style="background:#334155;opacity:0.4"></div>Garbage (ignored)</div>
+</div>
+
+<div id="rd-main-grid">
+  <div>
+    <div id="rd-array-container"></div>
+    <div id="rd-pointers"></div>
+    <div id="rd-status"></div>
+    <div id="rd-explanation"></div>
+    <div id="rd-log" style="margin-top:12px"></div>
+  </div>
+  <div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:6px;font-weight:600">Code <span style="background:#334155;color:#94a3b8;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:4px">C#</span></div>
+    <div id="rd-code-panel"></div>
+  </div>
+</div>
+
+</div>`
   }
 ];
 
@@ -2571,7 +2840,7 @@ function selectConcept(id) {
 
   // Expand #main for full-bleed interactive concepts, restore otherwise
   const mainEl = document.getElementById('main');
-  if (concept.id === 'backtracking-interactive' || concept.id === 'topk-visualizer') {
+  if (concept.id === 'backtracking-interactive' || concept.id === 'topk-visualizer' || concept.id === 'kth-visualizer' || concept.id === 'sort-colors-viz' || concept.id === 'remove-dups-viz') {
     mainEl.style.maxWidth = 'none';
     mainEl.style.padding = '20px 24px';
   } else {
@@ -2609,6 +2878,15 @@ function selectConcept(id) {
       // topk: mark init (user clicks Visualize to start)
       var topkRoot = document.getElementById('topk-root');
       if (topkRoot) topkRoot.dataset.topkInit = '1';
+      // kth: mark init (user clicks Visualize to start)
+      var kthRoot = document.getElementById('kth-root');
+      if (kthRoot) kthRoot.dataset.kthInit = '1';
+      // sort colors: init
+      var scRoot = document.getElementById('sc-root');
+      if (scRoot && window.scReset) window.scReset();
+      // remove duplicates: init
+      var rdRoot = document.getElementById('rd-root');
+      if (rdRoot && window.rdReset) window.rdReset();
     }, 50);
   } else {
     content.innerHTML = marked.parse(concept.content);
@@ -4374,6 +4652,602 @@ buildSidebar(CONCEPTS);
   });
   topkObs.observe(document.body, { childList: true, subtree: true });
 
+})();
+</script>
+<script>
+// ── KTH LARGEST MIN-HEAP VISUALIZER ──────────────────────────────────────────
+(function () {
+
+  // ── Min-heap operations ───────────────────────────────────────
+  function kthPush(h, v) {
+    h.push(v);
+    var i = h.length - 1;
+    while (i > 0) {
+      var p = (i - 1) >> 1;
+      if (h[p] > h[i]) { var t = h[p]; h[p] = h[i]; h[i] = t; i = p; }
+      else break;
+    }
+  }
+
+  function kthPop(h) {
+    if (h.length === 0) return undefined;
+    var last = h.pop();
+    if (h.length > 0) {
+      h[0] = last;
+      var i = 0;
+      while (true) {
+        var s = i, l = 2*i+1, r = 2*i+2;
+        if (l < h.length && h[l] < h[s]) s = l;
+        if (r < h.length && h[r] < h[s]) s = r;
+        if (s !== i) { var t = h[i]; h[i] = h[s]; h[s] = t; i = s; }
+        else break;
+      }
+    }
+  }
+
+  // ── Code lines ────────────────────────────────────────────────
+  var KTH_CODE = [
+    'var heap = new PriorityQueue&lt;int,int&gt;();',
+    '',
+    'foreach (int n in nums) {',
+    '    heap.Enqueue(n, n);',
+    '    if (heap.Count &gt; k)',
+    '        heap.Dequeue();',
+    '}',
+    'return heap.Peek();'
+  ];
+
+  // ── Step generation ───────────────────────────────────────────
+  function buildKthSteps(nums, k) {
+    var steps = [], heap = [];
+    steps.push({ phase:1, code:[0], ai:-1, heap:[], rem:null,
+      desc:'Initialize empty min-heap. k = ' + k });
+
+    for (var i = 0; i < nums.length; i++) {
+      var n = nums[i];
+      kthPush(heap, n);
+      steps.push({ phase:1, code:[2,3], ai:i, heap:heap.slice(), rem:null,
+        desc:'heap.Enqueue(' + n + ') → heap size = ' + heap.length });
+
+      if (heap.length > k) {
+        var mn = heap[0];
+        steps.push({ phase:1, code:[4], ai:i, heap:heap.slice(), rem:mn,
+          desc:'Size ' + heap.length + ' > k=' + k + ' → must remove minimum (' + mn + ')' });
+        kthPop(heap);
+        steps.push({ phase:1, code:[5], ai:i, heap:heap.slice(), rem:null,
+          desc:'Dequeued ' + mn + ' → heap holds the ' + k + ' largest elements seen so far' });
+      }
+    }
+
+    var suf = k===1?'st':k===2?'nd':k===3?'rd':'th';
+    steps.push({ phase:2, code:[7], ai:-1, heap:heap.slice(), rem:null,
+      desc:'heap.Peek() = ' + heap[0] + ' — the ' + k + suf + ' largest element \u2713' });
+    return steps;
+  }
+
+  // ── SVG tree rendering ────────────────────────────────────────
+  function renderKthTree(heap, removing) {
+    var n = heap.length;
+    var W = 320, R = 20;
+    if (n === 0) {
+      return '<svg width="' + W + '" height="60"><text x="' + (W/2) + '" y="35" text-anchor="middle" fill="#3f3f52" font-size="13" font-family="Inter,sans-serif">(empty)</text></svg>';
+    }
+    var levels = Math.floor(Math.log2(n)) + 1;
+    var H = levels * 72 + 24;
+    var pos = [];
+    for (var i = 0; i < n; i++) {
+      var lv = Math.floor(Math.log2(i + 1));
+      var cnt = 1 << lv;
+      var pi = i - cnt + 1;
+      pos.push({ x: W * (pi + 1) / (cnt + 1), y: 28 + lv * 72 });
+    }
+    var svg = '<svg width="' + W + '" height="' + H + '" style="overflow:visible">';
+    for (var i = 1; i < n; i++) {
+      var p = (i - 1) >> 1;
+      svg += '<line x1="' + pos[p].x + '" y1="' + pos[p].y + '" x2="' + pos[i].x + '" y2="' + pos[i].y + '" stroke="#2a2a45" stroke-width="2"/>';
+    }
+    for (var i = 0; i < n; i++) {
+      var isRoot = i === 0;
+      var isRem  = isRoot && heap[i] === removing;
+      var fill   = isRem ? '#2d0a0a' : (isRoot ? '#16122a' : '#111130');
+      var stroke = isRem ? '#ef4444' : (isRoot ? '#a78bfa' : '#334155');
+      var tc     = isRem ? '#f87171' : (isRoot ? '#c4b5fd' : '#94a3b8');
+      svg += '<circle cx="' + pos[i].x + '" cy="' + pos[i].y + '" r="' + R + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"/>';
+      svg += '<text x="' + pos[i].x + '" y="' + (pos[i].y+5) + '" text-anchor="middle" fill="' + tc + '" font-size="14" font-weight="700" font-family="\'JetBrains Mono\',monospace">' + heap[i] + '</text>';
+      if (isRoot) {
+        var tag = isRem ? '\u2190 remove' : '\u2190 min';
+        var tc2 = isRem ? '#ef4444' : '#7c3aed';
+        svg += '<text x="' + (pos[i].x + R + 4) + '" y="' + (pos[i].y - 6) + '" fill="' + tc2 + '" font-size="9" font-family="Inter,sans-serif">' + tag + '</text>';
+      }
+    }
+    svg += '</svg>';
+    return svg;
+  }
+
+  // ── State ─────────────────────────────────────────────────────
+  var kthSteps = [], kthIdx = 0, kthPlayTimer = null, kthNums = [], kthKval = 2;
+
+  function kthBuild() {
+    var inputEl = document.getElementById('kth-input');
+    var kEl = document.getElementById('kth-k');
+    if (!inputEl || !kEl) return;
+    var raw = inputEl.value.split(',').map(function(s){ return parseInt(s.trim(),10); }).filter(function(v){ return !isNaN(v); });
+    var k = parseInt(kEl.value, 10) || 1;
+    if (raw.length === 0) return;
+    kthNums = raw;
+    kthKval = Math.max(1, Math.min(k, raw.length));
+    kthSteps = buildKthSteps(kthNums, kthKval);
+    kthIdx = 0;
+    kthStopPlay();
+    document.getElementById('kth-kval').textContent = kthKval;
+    document.getElementById('kth-stepbar').style.display = 'flex';
+    document.getElementById('kth-body').style.display = 'grid';
+    document.getElementById('kth-result').style.display = 'none';
+    kthRender();
+  }
+
+  function kthRender() {
+    var s = kthSteps[kthIdx];
+    if (!s) return;
+
+    document.getElementById('kth-counter').textContent = (kthIdx + 1) + ' / ' + kthSteps.length;
+    document.getElementById('kth-desc').textContent = s.desc;
+
+    var phEl = document.getElementById('kth-phase');
+    phEl.textContent = s.phase === 1 ? 'Scan' : 'Result';
+    phEl.className = 'kth-phase ' + (s.phase === 1 ? 'p1' : 'p2');
+
+    document.getElementById('kth-prev').disabled = kthIdx === 0;
+    document.getElementById('kth-next').disabled = kthIdx === kthSteps.length - 1;
+
+    // Array cells
+    document.getElementById('kth-array').innerHTML = kthNums.map(function(v, i) {
+      var cls = 'kth-cell' + (i === s.ai ? ' active' : i < s.ai ? ' done' : '');
+      return '<div class="' + cls + '">' + v + '</div>';
+    }).join('');
+
+    // Code
+    document.getElementById('kth-code').innerHTML = KTH_CODE.map(function(line, i) {
+      var act = s.code.indexOf(i) >= 0;
+      return '<div class="kth-code-line' + (act ? ' active' : '') + '">' + (line || '&nbsp;') + '</div>';
+    }).join('');
+
+    // Heap tree SVG
+    document.getElementById('kth-heap-viz').innerHTML = renderKthTree(s.heap, s.rem);
+
+    // Heap list (sorted ascending = min first)
+    var listEl = document.getElementById('kth-heap-list');
+    if (s.heap.length === 0) {
+      listEl.innerHTML = '<span style="color:#3f3f52;font-size:12px;font-style:italic">(empty)</span>';
+    } else {
+      var sorted = s.heap.slice().sort(function(a, b){ return a - b; });
+      listEl.innerHTML = sorted.map(function(v, i) {
+        var isMin = i === 0;
+        var isRem = isMin && v === s.rem;
+        var cls = 'kth-heap-item' + (isRem ? ' removing' : isMin ? ' min-item' : '');
+        var note = isRem ? ' \u2190 DEQUEUE (smallest, displaced)' : (isMin ? ' \u2190 Peek() — the answer' : '');
+        return '<div class="' + cls + '">' + v + note + '</div>';
+      }).join('');
+    }
+
+    // Stats
+    document.getElementById('kth-stats').innerHTML =
+      'Heap size: <strong>' + s.heap.length + '</strong> / k=' + kthKval +
+      (s.ai >= 0 ? ' &nbsp;\u00b7&nbsp; Processing: <strong>' + kthNums[s.ai] + '</strong>' : '');
+
+    // Result panel
+    if (s.phase === 2) {
+      document.getElementById('kth-result').style.display = 'flex';
+      document.getElementById('kth-result-val').textContent = s.heap[0];
+      var suf = kthKval===1?'st':kthKval===2?'nd':kthKval===3?'rd':'th';
+      document.getElementById('kth-result-note').textContent =
+        'heap.Peek() \u2014 minimum of the top ' + kthKval + ' = the ' + kthKval + suf + ' largest';
+    } else {
+      document.getElementById('kth-result').style.display = 'none';
+    }
+  }
+
+  function kthStep(dir) {
+    kthStopPlay();
+    kthIdx = Math.max(0, Math.min(kthSteps.length - 1, kthIdx + dir));
+    kthRender();
+  }
+
+  function kthTogglePlay() {
+    if (kthPlayTimer) { kthStopPlay(); return; }
+    document.getElementById('kth-play').textContent = '\u23f8 Pause';
+    kthPlayTimer = setInterval(function() {
+      if (kthIdx >= kthSteps.length - 1) { kthStopPlay(); return; }
+      kthIdx++;
+      kthRender();
+    }, 750);
+  }
+
+  function kthStopPlay() {
+    if (kthPlayTimer) { clearInterval(kthPlayTimer); kthPlayTimer = null; }
+    var btn = document.getElementById('kth-play');
+    if (btn) btn.textContent = '\u25b6 Play';
+  }
+
+  window.kthBuild = kthBuild;
+  window.kthStep = kthStep;
+  window.kthTogglePlay = kthTogglePlay;
+  window.kthStopPlay = kthStopPlay;
+
+  var kthObs = new MutationObserver(function() {
+    var r = document.getElementById('kth-root');
+    if (r && !r.dataset.kthInit) r.dataset.kthInit = '1';
+  });
+  kthObs.observe(document.body, { childList:true, subtree:true });
+
+})();
+</script>
+
+<!-- ── SORT COLORS VISUALIZER (LC 75) ──────────────────────────────────────── -->
+<script>
+(function(){
+  var arr, low, mid, high, done, log, activeLine, explanation;
+
+  var CODE_LINES = [
+    'public void SortColors(int[] nums) {',
+    '    int low = 0, mid = 0, high = nums.Length - 1;',
+    '',
+    '    while (mid <= high) {',
+    '        if (nums[mid] == 0) {',
+    '            swap(nums, mid, low);',
+    '            low++;',
+    '            mid++;',
+    '        } else if (nums[mid] == 1) {',
+    '            mid++;',
+    '        } else {',
+    '            swap(nums, mid, high);',
+    '            high--;',
+    '        }',
+    '    }',
+    '}'
+  ];
+
+  function parse() {
+    return document.getElementById('sc-input').value.split(',').map(function(s){ return parseInt(s.trim()); }).filter(function(n){ return n===0||n===1||n===2; });
+  }
+
+  function renderCode() {
+    var panel = document.getElementById('sc-code-panel');
+    if (!panel) return;
+    panel.innerHTML = '';
+    CODE_LINES.forEach(function(line, i) {
+      var div = document.createElement('div');
+      div.className = 'sc-code-line' + (i === activeLine ? ' active' : '');
+      div.textContent = line || '\u00a0';
+      panel.appendChild(div);
+    });
+  }
+
+  function render() {
+    var ac = document.getElementById('sc-array-container');
+    var pc = document.getElementById('sc-pointers');
+    var inv = document.getElementById('sc-invariant');
+    var expEl = document.getElementById('sc-explanation');
+    if (!ac || !pc || !inv) return;
+    ac.innerHTML = '';
+    pc.innerHTML = '';
+
+    arr.forEach(function(v, i) {
+      var cell = document.createElement('div');
+      cell.className = 'sc-cell sc-cell-' + v;
+      cell.textContent = v;
+      if (!done) {
+        if (i < low) cell.style.opacity = '0.5';
+        if (i > high) cell.style.opacity = '0.5';
+      }
+      ac.appendChild(cell);
+    });
+
+    arr.forEach(function(_, i) {
+      var ptr = document.createElement('div');
+      ptr.className = 'sc-ptr';
+      var labels = [];
+      if (i === low && !done) labels.push('<span class="sc-ptr-low">L</span>');
+      if (i === mid && !done) labels.push('<span class="sc-ptr-mid">M</span>');
+      if (i === high && !done) labels.push('<span class="sc-ptr-high">H</span>');
+      ptr.innerHTML = labels.join(' ');
+      pc.appendChild(ptr);
+    });
+
+    if (done) {
+      inv.innerHTML = '<span style="color:#22c55e;font-weight:600">Done!</span> Array sorted: [' + arr.join(', ') + ']';
+    } else {
+      inv.innerHTML =
+        '<span style="color:#22c55e">low=' + low + '</span> &nbsp; ' +
+        '<span style="color:#eab308">mid=' + mid + '</span> &nbsp; ' +
+        '<span style="color:#f97316">high=' + high + '</span> &nbsp; | &nbsp; ' +
+        'Checking <code>nums[' + mid + '] = ' + arr[mid] + '</code>';
+    }
+
+    if (expEl) expEl.innerHTML = explanation || '';
+    renderCode();
+  }
+
+  function addLog(msg) {
+    log.push(msg);
+    var el = document.getElementById('sc-log');
+    if (el) { el.textContent = log.join('\n'); el.scrollTop = el.scrollHeight; }
+  }
+
+  window.scReset = function() {
+    arr = parse();
+    low = 0;
+    mid = 0;
+    high = arr.length - 1;
+    done = false;
+    log = [];
+    activeLine = 1;
+    explanation = 'Initialize: low=0, mid=0, high=' + high;
+    var el = document.getElementById('sc-log');
+    if (el) el.textContent = 'Ready. Click Step to begin.';
+    render();
+  };
+
+  window.scStep = function() {
+    if (done) return;
+    if (mid > high) {
+      done = true;
+      activeLine = 14;
+      explanation = '<span style="color:#22c55e">mid (' + mid + ') > high (' + high + ')</span> — loop ends. Array is sorted!';
+      addLog('mid > high. DONE!');
+      render();
+      return;
+    }
+
+    var val = arr[mid];
+    if (val === 0) {
+      activeLine = 5;
+      explanation = '<code>nums[' + mid + '] == 0</code> — swap with <code>low</code> (index ' + low + '), then <code>low++</code> and <code>mid++</code>.<br><span style="color:#64748b">Why mid++? What was at low is always a 1 (confirmed region), so no recheck needed.</span>';
+      addLog('nums[' + mid + ']=0 swap(mid=' + mid + ', low=' + low + '), low++, mid++');
+      var tmp = arr[low]; arr[low] = arr[mid]; arr[mid] = tmp;
+      low++; mid++;
+    } else if (val === 1) {
+      activeLine = 9;
+      explanation = '<code>nums[' + mid + '] == 1</code> — already in the right place. Just <code>mid++</code>.';
+      addLog('nums[' + mid + ']=1 skip, mid++');
+      mid++;
+    } else {
+      activeLine = 11;
+      explanation = '<code>nums[' + mid + '] == 2</code> — swap with <code>high</code> (index ' + high + '), then <code>high--</code>.<br><span style="color:#64748b">Why NOT mid++? What came from high is unknown — must recheck it.</span>';
+      addLog('nums[' + mid + ']=2 swap(mid=' + mid + ', high=' + high + '), high--');
+      var tmp2 = arr[mid]; arr[mid] = arr[high]; arr[high] = tmp2;
+      high--;
+    }
+
+    if (mid > high) {
+      done = true;
+      activeLine = 14;
+      explanation = '<span style="color:#22c55e">mid (' + mid + ') > high (' + high + ')</span> — loop ends. Array is sorted!';
+      addLog('mid > high. DONE!');
+    }
+    render();
+  };
+
+  window.scRunAll = function() {
+    if (done) return;
+    var run = function() {
+      if (!done) {
+        scStep();
+        if (!done) setTimeout(run, 700);
+      }
+    };
+    run();
+  };
+
+  // Auto-init when sc-root appears in DOM
+  var scObs = new MutationObserver(function() {
+    var root = document.getElementById('sc-root');
+    if (root && !root.dataset.scInit) {
+      root.dataset.scInit = '1';
+      scReset();
+    }
+  });
+  scObs.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+
+<!-- ── REMOVE DUPLICATES VISUALIZER (LC 26) ────────────────────────────────── -->
+<script>
+(function(){
+  var arr, w, r, done, log, activeLine, explanation;
+  // Sub-step state: null = ready for compare, 'advance' = need w++, 'copy' = need nums[w]=nums[r]
+  var subStep;
+
+  var CODE_LINES = [
+    'public int RemoveDuplicates(int[] nums) {',
+    '    if (nums.Length == 0) return 0;',
+    '',
+    '    int w = 0;',
+    '',
+    '    for (int r = 1; r < nums.Length; r++) {',
+    '        if (nums[r] != nums[w]) {',
+    '            w++;',
+    '            nums[w] = nums[r];',
+    '        }',
+    '    }',
+    '',
+    '    return w + 1;',
+    '}'
+  ];
+
+  function parse() {
+    return document.getElementById('rd-input').value.split(',').map(function(s){ return parseInt(s.trim()); }).filter(function(n){ return !isNaN(n); });
+  }
+
+  function renderCode() {
+    var panel = document.getElementById('rd-code-panel');
+    if (!panel) return;
+    panel.innerHTML = '';
+    CODE_LINES.forEach(function(line, i) {
+      var div = document.createElement('div');
+      div.className = 'rd-code-line' + (i === activeLine ? ' active' : '');
+      div.textContent = line || '\u00a0';
+      panel.appendChild(div);
+    });
+  }
+
+  function render() {
+    var ac = document.getElementById('rd-array-container');
+    var pc = document.getElementById('rd-pointers');
+    var statusEl = document.getElementById('rd-status');
+    var expEl = document.getElementById('rd-explanation');
+    if (!ac || !pc || !statusEl) return;
+    ac.innerHTML = '';
+    pc.innerHTML = '';
+
+    arr.forEach(function(v, i) {
+      var cell = document.createElement('div');
+      cell.className = 'rd-cell';
+      cell.textContent = v;
+      if (done) {
+        if (i <= w) cell.className += ' unique';
+        else cell.className += ' garbage';
+      } else {
+        if (i < w) cell.className += ' unique';
+        if (i === w) cell.className += ' writing';
+        if (i === r && i !== w) cell.className += ' reading';
+        if (i > w && i !== r) cell.className += ' garbage';
+      }
+      ac.appendChild(cell);
+    });
+
+    arr.forEach(function(_, i) {
+      var ptr = document.createElement('div');
+      ptr.className = 'rd-ptr';
+      var labels = [];
+      if (i === w && !done) labels.push('<span class="rd-ptr-w">w</span>');
+      if (i === r && !done) labels.push('<span class="rd-ptr-r">r</span>');
+      ptr.innerHTML = labels.join(' ');
+      pc.appendChild(ptr);
+    });
+
+    if (done) {
+      statusEl.innerHTML = '<span style="color:#22c55e;font-weight:600">Done!</span> k = ' + (w + 1) + ' — first ' + (w + 1) + ' slots: [' + arr.slice(0, w + 1).join(', ') + ']';
+    } else {
+      statusEl.innerHTML =
+        '<span style="color:#22c55e">w=' + w + ' (nums[w]=' + arr[w] + ')</span> &nbsp; ' +
+        '<span style="color:#fbbf24">r=' + r + ' (nums[r]=' + arr[r] + ')</span>';
+    }
+
+    if (expEl) expEl.innerHTML = explanation || '';
+    renderCode();
+  }
+
+  function addLog(msg) {
+    log.push(msg);
+    var el = document.getElementById('rd-log');
+    if (el) { el.textContent = log.join('\n'); el.scrollTop = el.scrollHeight; }
+  }
+
+  function checkDone() {
+    if (r >= arr.length) {
+      done = true;
+      activeLine = 12;
+      explanation = '<span style="color:#22c55e">r reached the end.</span> Return w+1 = <strong>' + (w + 1) + '</strong>. First ' + (w + 1) + ' slots are all uniques.';
+      addLog('DONE! k=' + (w + 1) + ' → [' + arr.slice(0, w + 1).join(',') + ']');
+    }
+  }
+
+  window.rdReset = function() {
+    arr = parse();
+    w = 0;
+    r = 1;
+    done = false;
+    subStep = null;
+    log = [];
+    activeLine = 3;
+    explanation = 'Initialize: w=0 (first element is always unique), r=1 (start scanning from second element).';
+    var el = document.getElementById('rd-log');
+    if (el) el.textContent = 'Ready. Click Step to begin.';
+    if (arr.length <= 1) {
+      done = true;
+      activeLine = 12;
+      explanation = arr.length === 0 ? 'Empty array — return 0.' : 'Single element — already unique. Return 1.';
+    }
+    render();
+  };
+
+  window.rdStep = function() {
+    if (done) return;
+    if (r >= arr.length) {
+      checkDone();
+      render();
+      return;
+    }
+
+    // Sub-step: w++ (advance the write pointer)
+    if (subStep === 'advance') {
+      activeLine = 7;
+      w++;
+      explanation = '<code>w++</code> → w moves from ' + (w - 1) + ' to <strong>' + w + '</strong>.<br><span style="color:#64748b">Open up the next slot. The old slot holds a value we need — can\'t overwrite it.</span>';
+      addLog('  w++ → w=' + w);
+      subStep = 'copy';
+      render();
+      return;
+    }
+
+    // Sub-step: nums[w] = nums[r] (copy the value)
+    if (subStep === 'copy') {
+      activeLine = 8;
+      arr[w] = arr[r];
+      explanation = '<code>nums[' + w + '] = nums[' + r + ']</code> → copy <strong>' + arr[r] + '</strong> into slot ' + w + '.<br><span style="color:#64748b">The new value is now placed. The clean pile grows by one.</span>';
+      addLog('  nums[' + w + '] = nums[' + r + '] = ' + arr[r]);
+      subStep = 'r_advance';
+      render();
+      return;
+    }
+
+    // Sub-step: r++ (for loop advances the reader)
+    if (subStep === 'r_advance') {
+      activeLine = 5;
+      r++;
+      explanation = '<code>r++</code> → r moves to <strong>' + r + '</strong>.' + (r >= arr.length ? '<br><span style="color:#22c55e">r is past the end — loop is done.</span>' : '<br><span style="color:#64748b">The for loop advances the scout to the next element.</span>');
+      addLog('  r++ → r=' + r);
+      subStep = null;
+      checkDone();
+      render();
+      return;
+    }
+
+    // Compare: nums[r] vs nums[w]
+    if (arr[r] !== arr[w]) {
+      activeLine = 6;
+      explanation = '<code>nums[' + r + ']=' + arr[r] + '</code> != <code>nums[' + w + ']=' + arr[w] + '</code> — <span style="color:#22c55e">new value found!</span><br><span style="color:#64748b">Next: w++ to open a slot, then copy the value there.</span>';
+      addLog('r=' + r + ': nums[r]=' + arr[r] + ' != nums[w]=' + arr[w] + ' → NEW!');
+      subStep = 'advance';
+    } else {
+      activeLine = 6;
+      explanation = '<code>nums[' + r + ']=' + arr[r] + '</code> == <code>nums[' + w + ']=' + arr[w] + '</code> — <span style="color:#f97316">duplicate, skip.</span><br><span style="color:#64748b">w stays put. Next: r++ moves the scout forward.</span>';
+      addLog('r=' + r + ': nums[r]=' + arr[r] + ' == nums[w]=' + arr[w] + ' → skip');
+      subStep = 'r_advance';
+    }
+    render();
+  };
+
+  window.rdRunAll = function() {
+    if (done) return;
+    var run = function() {
+      if (!done) {
+        rdStep();
+        if (!done) setTimeout(run, 700);
+      }
+    };
+    run();
+  };
+
+  var rdObs = new MutationObserver(function() {
+    var root = document.getElementById('rd-root');
+    if (root && !root.dataset.rdInit) {
+      root.dataset.rdInit = '1';
+      rdReset();
+    }
+  });
+  rdObs.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
 </body>

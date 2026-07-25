@@ -5824,7 +5824,7 @@ require(['vs/editor/editor.main'], function () {
     }
 
     // Pre-seed guides. GUIDE_VERSIONS controls when to overwrite (bump version = force refresh).
-    const GUIDE_VERSIONS = { 347: 3, 128: 1, 238: 1, 125: 1, 11: 1, 3: 1, 206: 1, 21: 1, 141: 2 };
+    const GUIDE_VERSIONS = { 347: 3, 128: 1, 238: 1, 125: 1, 11: 1, 3: 1, 206: 1, 21: 1, 141: 2, 75: 1, 26: 1 };
     const SEEDED_GUIDES = {
       21: `## 21. Merge Two Sorted Lists\n\n### What is the problem asking?\n\nYou have two sorted linked lists. Merge them into one sorted linked list by rewiring the pointers — don't create new nodes.\n\n\`\`\`\nlist1:  1 → 2 → 4\nlist2:  1 → 3 → 4\nresult: 1 → 1 → 2 → 3 → 4 → 4\n\`\`\`\n\n---\n\n### The intuition — two piles of cards\n\nImagine two sorted piles of cards face-up. Each step you:\n1. Look at the top card of each pile\n2. Pick the smaller one\n3. Advance that pile forward\n\n\`\`\`\npile1:  1 → 2 → 4\npile2:  1 → 3 → 4\n\n1 vs 1 → pick left (tie)    result: 1\n2 vs 1 → pick right         result: 1 → 1\n2 vs 3 → pick left          result: 1 → 1 → 2\n4 vs 3 → pick right         result: 1 → 1 → 2 → 3\n4 vs 4 → pick left          result: 1 → 1 → 2 → 3 → 4\npile1 empty → attach rest   result: 1 → 1 → 2 → 3 → 4 → 4\n\`\`\`\n\nYou never need to look beyond the top card. Just compare and pick.\n\n---\n\n### The dummy node — why you need it\n\nWhen you pick the first node, you have nothing to attach it TO yet. A dummy node solves this — create a throwaway node so curr.next = node works from the very first pick.\n\n\`\`\`\ndummy[0] → (nothing yet)\ncurr → dummy           ← curr starts HERE, at dummy\n\`\`\`\n\nAfter picking node [1]:\n\`\`\`\ndummy[0] → [1]\n             ↑ curr moves here\n\`\`\`\n\nAt the end return dummy.next to skip the throwaway [0].\n\n**dummy never moves. curr walks forward every step.**\n\n---\n\n### The three operations every iteration\n\nEach iteration does exactly three things:\n\n\`\`\`csharp\ncurr.next = list1;        // 1. WELD — attach the picked node onto the chain\nlist1 = list1.next;       // 2. ADVANCE PILE — move that list forward one\ncurr = curr.next;         // 3. ADVANCE CURR — move your result finger forward\n\`\`\`\n\nThe mistake to avoid: curr = list1 just moves your finger to that node. It does NOT weld it onto anything. You need curr.next = list1.\n\n---\n\n### Why && not ||\n\n\`\`\`csharp\nwhile (list1 != null && list2 != null)  // CORRECT\nwhile (list1 != null || list2 != null)  // CRASH\n\`\`\`\n\nWith ||: if list1 runs out you still enter the loop and hit list1.val → NullReferenceException.\n\nWith &&: exit as soon as either list runs out. Then attach the remaining list — it is already sorted:\n\n\`\`\`csharp\ncurr.next = list1 ?? list2;\n\`\`\`\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic ListNode MergeTwoLists(ListNode list1, ListNode list2) {\n    ListNode dummy = new ListNode(0);\n    ListNode curr = dummy;\n\n    while (list1 != null && list2 != null) {\n        if (list1.val <= list2.val) {\n            curr.next = list1;\n            list1 = list1.next;\n        } else {\n            curr.next = list2;\n            list2 = list2.next;\n        }\n        curr = curr.next;\n    }\n\n    curr.next = list1 ?? list2;\n    return dummy.next;\n}\n\`\`\`\n\n---\n\n### Complexity\n\n| | |\n|---|---|\n| Time | O(n + m) — visit each node once |\n| Space | O(1) — no new nodes, just pointer rewiring |`,
       141: `## 141. Linked List Cycle\n\n### What is the problem asking?\n\nGiven the head of a linked list, return true if there is a cycle — i.e. some node's .next points back to an earlier node, creating an infinite loop.\n\n---\n\n### Approach 1 — HashSet (your first instinct)\n\nSave every node you visit. If you see a node you've already saved, there's a cycle.\n\n\`\`\`csharp\nvar seen = new HashSet<ListNode>();\nvar cur = head;\nwhile (cur != null) {\n    if (seen.Contains(cur)) return true;\n    seen.Add(cur);\n    cur = cur.next;\n}\nreturn false;\n\`\`\`\n\n**Time:** O(n) — **Space:** O(n) — works, but uses extra memory.\n\n---\n\n### Approach 2 — Fast and slow pointers (Floyd's algorithm)\n\nNo extra memory. Two pointers start at head. Slow moves 1 step. Fast moves 2 steps.\n\n**No cycle:** fast runs off the end → return false\n\n**Cycle:** fast laps slow and they land on the same node → return true\n\n**Why do they always meet?**\n\nOnce fast enters the cycle, measure the gap between fast and slow in nodes (going forward around the cycle).\n\nEach step: slow moves 1, fast moves 2 → gap shrinks by exactly 1.\n\n\`\`\`\ngap = 4 → 3 → 2 → 1 → 0  ← they meet\n\`\`\`\n\nThe gap starts at some number and decrements by 1 every step. It must hit 0 — it can never skip over 0 because it only ever decrements by 1. When the gap is 0, slow == fast.\n\n\`\`\`\nList: 3 → 2 → 0 → -4\n               ↑         |\n               └─────────┘\n\nStart:   slow=3  fast=3\nStep 1:  slow=2  fast=0\nStep 2:  slow=0  fast=2    (fast lapped around)\nStep 3:  slow=-4 fast=-4   ← MEET → cycle detected\n\`\`\`\n\n**No cycle:**\n\`\`\`\n1 → 2 → null\n\nStep 1:  slow=2  fast=null → loop exits → return false\n\`\`\`\n\n---\n\n### Why check slow == fast AFTER moving?\n\nBoth start at head. If you check before moving, slow==fast immediately (both at head) and you'd return true wrongly. Move first, then check.\n\n---\n\n### Why the loop condition is fast != null && fast.next != null?\n\n- \`fast != null\` — fast itself might be null (even-length list)\n- \`fast.next != null\` — you're about to do fast.next.next, so fast.next must exist first\n\nIf either is null, there's no cycle — a cycle has no null.\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic bool HasCycle(ListNode head) {\n    ListNode slow = head;\n    ListNode fast = head;\n\n    while (fast != null && fast.next != null) {\n        slow = slow.next;\n        fast = fast.next.next;\n\n        if (slow == fast) return true;\n    }\n\n    return false;\n}\n\`\`\`\n\n---\n\n### Complexity\n\n| | HashSet | Fast/Slow |\n|---|---|---|\n| Time | O(n) | O(n) |\n| Space | O(n) | O(1) |`,
@@ -6610,6 +6610,119 @@ public int MaxArea(int[] height) {
 
 - **Time:** O(n) — each pointer moves inward at most n times total
 - **Space:** O(1) — just two pointers and a max variable`,
+      75: `## 75. Sort Colors (Dutch National Flag)
+
+### What is the problem asking?
+
+Array has only 0s, 1s, and 2s. Sort it in place in one pass with O(1) extra space.
+
+\`\`\`
+Input:  [2, 0, 2, 1, 1, 0]
+Output: [0, 0, 1, 1, 2, 2]
+\`\`\`
+
+---
+
+### The idea — three buckets, one scan
+
+Push 0s to the left. Push 2s to the right. 1s land in the middle automatically.
+
+Three pointers track the boundaries:
+
+- **low** = next empty slot on the left for a 0
+- **mid** = current element being checked
+- **high** = next empty slot on the right for a 2
+
+\`\`\`
+[ confirmed 0s | confirmed 1s | unknown | confirmed 2s ]
+                low            mid       high
+\`\`\`
+
+As mid scans forward, the unknown region shrinks until mid > high and everything is sorted.
+
+---
+
+### The three cases
+
+**nums[mid] == 0 → throw it left**
+- swap nums[mid] and nums[low]
+- move low forward 1
+- move mid forward 1
+
+**Why move mid?** What was at nums[low] is always a 1 — because the region between low and mid is confirmed 1s. So after the swap, mid holds a 1. No need to recheck. Safe to move forward.
+
+**nums[mid] == 1 → already in the right place**
+- move mid forward 1
+
+**nums[mid] == 2 → throw it right**
+- swap nums[mid] and nums[high]
+- move high backward 1
+- do NOT move mid
+
+**Why NOT move mid?** What came from nums[high] is unknown — could be 0, 1, or 2. Must recheck it next turn.
+
+---
+
+### Visual trace
+
+\`\`\`
+nums = [2, 0, 2, 1, 1, 0]    low=0, mid=0, high=5
+
+Turn 1: nums[0]=2 → swap(mid,high)
+  [0, 0, 2, 1, 1, 2]  high=4, mid stays at 0
+
+Turn 2: nums[0]=0 → swap(mid,low)
+  [0, 0, 2, 1, 1, 2]  low=1, mid=1
+
+Turn 3: nums[1]=0 → swap(mid,low)
+  [0, 0, 2, 1, 1, 2]  low=2, mid=2
+
+Turn 4: nums[2]=2 → swap(mid,high)
+  [0, 0, 1, 1, 2, 2]  high=3, mid stays at 2
+
+Turn 5: nums[2]=1 → mid=3
+
+Turn 6: nums[3]=1 → mid=4
+
+mid(4) > high(3) → STOP
+
+Result: [0, 0, 1, 1, 2, 2] ✓
+\`\`\`
+
+---
+
+### Full solution (C#)
+
+\`\`\`csharp
+public void SortColors(int[] nums) {
+    int low = 0, mid = 0, high = nums.Length - 1;
+
+    while (mid <= high) {
+        if (nums[mid] == 0) {
+            int temp = nums[low];
+            nums[low] = nums[mid];
+            nums[mid] = temp;
+            low++;
+            mid++;
+        } else if (nums[mid] == 1) {
+            mid++;
+        } else {
+            int temp = nums[mid];
+            nums[mid] = nums[high];
+            nums[high] = temp;
+            high--;
+        }
+    }
+}
+\`\`\`
+
+---
+
+### Complexity
+
+- **Time:** O(n) — single pass, mid visits each element once
+- **Space:** O(1) — just three pointer variables`,
+      26: `## 26. Remove Duplicates from Sorted Array\n\n### What is the problem asking?\n\nGiven a sorted array, remove duplicates **in-place** so each unique value appears only once. Return k — the number of unique elements. The first k slots of the array must hold those unique values.\n\n\`\`\`\nnums = [1, 1, 2]        → k = 2, nums = [1, 2, _]\nnums = [0,0,1,1,1,2,2,3,3,4] → k = 5, nums = [0,1,2,3,4,_,_,_,_,_]\n\`\`\`\n\nYou don't need to worry about what's in the slots after k — the judge ignores them.\n\n---\n\n### Why is this problem easy to overthink?\n\nYour first instinct might be: "I need to shift elements, or use a Set, or splice things out." But none of that is needed. The key insight is:\n\n**The array is already sorted.**\n\nThat means all duplicates are right next to each other. You never need to search or look far — just compare neighbors.\n\n---\n\n### The core insight — two pointers doing two different jobs\n\nImagine two fingers on the array:\n\n- **write pointer (w)** — marks where the next unique value should be placed. Think of it as the "builder" of the clean array.\n- **read pointer (r)** — scans forward through every element. Think of it as the "scout" looking for new values.\n\nThe rule is dead simple:\n\n> If the scout finds something different from what's at the last written position, copy it to the write position and advance the writer.\n\n---\n\n### Walk through it\n\n\`\`\`\nnums = [0, 0, 1, 1, 1, 2, 2, 3, 3, 4]\n        w  r\n\`\`\`\n\nw starts at 0 (first element is always unique). r starts at 1.\n\n\`\`\`\nr=1: nums[1]=0, nums[w]=0  → same, skip\nr=2: nums[2]=1, nums[w]=0  → different! w++ → w=1, nums[1]=1\nr=3: nums[3]=1, nums[w]=1  → same, skip\nr=4: nums[4]=1, nums[w]=1  → same, skip\nr=5: nums[5]=2, nums[w]=1  → different! w++ → w=2, nums[2]=2\nr=6: nums[6]=2, nums[w]=2  → same, skip\nr=7: nums[7]=3, nums[w]=2  → different! w++ → w=3, nums[3]=3\nr=8: nums[8]=3, nums[w]=3  → same, skip\nr=9: nums[9]=4, nums[w]=3  → different! w++ → w=4, nums[4]=4\n\`\`\`\n\nResult: w=4, so k = w+1 = 5.\n\`\`\`\nnums = [0, 1, 2, 3, 4, ...]\n        ↑              ↑\n        first k=5 slots = answer\n\`\`\`\n\n---\n\n### Why compare nums[r] to nums[w], not nums[r] to nums[r-1]?\n\nBoth work here, but comparing to nums[w] is the more general pattern — it tells you "is this value different from the last thing I placed?" This same idea extends to problems like LC 80 (allow 2 duplicates) where you compare nums[r] to nums[w-2].\n\n---\n\n### Edge case\n\nIf the array is empty, return 0. If it has 1 element, it's already unique — return 1.\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic int RemoveDuplicates(int[] nums) {\n    if (nums.Length == 0) return 0;\n\n    int w = 0;\n\n    for (int r = 1; r < nums.Length; r++) {\n        if (nums[r] != nums[w]) {\n            w++;\n            nums[w] = nums[r];\n        }\n    }\n\n    return w + 1;\n}\n\`\`\`\n\n---\n\n### Why w + 1?\n\nw is a 0-based index. After the loop, w points at the last unique element. The count of unique elements is w + 1.\n\n---\n\n### Complexity\n\n| | |\n|---|---|\n| Time | O(n) — single pass through the array |\n| Space | O(1) — just two pointer variables |`,
     };
     for (const [pid, text] of Object.entries(SEEDED_GUIDES)) {
       const vkey = `dsa_guide_v_${pid}`;
