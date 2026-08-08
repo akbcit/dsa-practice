@@ -2783,6 +2783,66 @@ Sorting is O(n log n). The heap approach is O(n log k), which is faster when k i
 </div>
 
 </div>`
+  },
+  {
+    id: "ll-merge-viz",
+    name: "LC 143 — Reorder List Merge Visualizer",
+    icon: "🔗",
+    category: "Data Structures",
+    tag: "ds",
+    content: `<div id="rl-root" style="font-family:'Inter',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;padding:24px;min-height:100vh">
+<style>
+#rl-root * { box-sizing:border-box; }
+#rl-controls { display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap; }
+#rl-controls label { font-size:12px;color:#64748b; }
+#rl-controls input { background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:13px;width:220px; }
+#rl-controls button { padding:6px 14px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s; }
+.rl-btn-step { background:#7c3aed;color:#fff; }
+.rl-btn-step:hover { background:#6d28d9; }
+.rl-btn-run { background:#059669;color:#fff; }
+.rl-btn-run:hover { background:#047857; }
+.rl-btn-reset { background:#334155;color:#e2e8f0; }
+.rl-btn-reset:hover { background:#475569; }
+
+#rl-main-grid { display:grid;grid-template-columns:1fr 340px;gap:20px;margin-top:16px; }
+@media (max-width:800px) { #rl-main-grid { grid-template-columns:1fr; } }
+
+#rl-canvas { min-height:180px;margin:12px 0; }
+#rl-canvas svg text { font-family:'JetBrains Mono',monospace; }
+#rl-phase { font-size:14px;color:#a78bfa;font-weight:600;margin-bottom:8px; }
+#rl-explanation { background:#1a2035;border:1px solid #2e3f63;border-radius:8px;padding:12px 16px;font-size:13px;color:#e2e8f0;line-height:1.6;min-height:48px; }
+#rl-explanation code { background:#334155;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px; }
+#rl-log { background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#94a3b8;max-height:180px;overflow-y:auto;white-space:pre-line; }
+#rl-code-panel { background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px 0;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;overflow:hidden; }
+.rl-code-line { padding:2px 14px;border-left:3px solid transparent;color:#94a3b8;white-space:pre; }
+.rl-code-line.active { background:#332500;color:#fde68a;border-left-color:#f59e0b;font-weight:600; }
+</style>
+
+<h2 style="font-size:22px;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">LC 143 — Reorder List (Merge Step)</h2>
+<p style="color:#94a3b8;font-size:14px;margin-bottom:16px">Visualizes the merge phase: interleaving the first half with the reversed second half.</p>
+
+<div id="rl-controls">
+  <label>List:</label>
+  <input id="rl-input" value="1,2,3,4,5" placeholder="e.g. 1,2,3,4,5">
+  <button class="rl-btn-reset" onclick="rlReset()">Reset</button>
+  <button class="rl-btn-step" onclick="rlStep()">Step</button>
+  <button class="rl-btn-run" onclick="rlRunAll()">Run All</button>
+</div>
+
+<div id="rl-main-grid">
+  <div>
+    <div id="rl-phase"></div>
+    <div id="rl-canvas"></div>
+    <div id="rl-explanation"></div>
+    <div id="rl-log" style="margin-top:12px"></div>
+  </div>
+  <div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:6px;font-weight:600">Code <span style="background:#334155;color:#94a3b8;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:4px">C#</span></div>
+    <div id="rl-code-panel"></div>
+  </div>
+</div>
+
+</div>`
   }
 ];
 
@@ -2887,6 +2947,9 @@ function selectConcept(id) {
       // remove duplicates: init
       var rdRoot = document.getElementById('rd-root');
       if (rdRoot && window.rdReset) window.rdReset();
+      // reorder list merge: init
+      var rlRoot = document.getElementById('rl-root');
+      if (rlRoot && window.rlReset) window.rlReset();
     }, 50);
   } else {
     content.innerHTML = marked.parse(concept.content);
@@ -5248,6 +5311,273 @@ buildSidebar(CONCEPTS);
     }
   });
   rdObs.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+
+<!-- ── REORDER LIST MERGE VISUALIZER (LC 143) ────────────────────────────────── -->
+<script>
+(function(){
+  var firstHalf, secondHalf, merged, firstCurr, secondCurr, phase, done, log, activeLine, explanation, stepDetail;
+
+  var CODE_LINES = [
+    'ListNode mid = GetMid(head);',
+    'ListNode secondHalf = mid.Next;',
+    'mid.Next = null;',
+    'ListNode reversed = Reverse(secondHalf);',
+    '',
+    'while (secondCurr != null) {',
+    '    ListNode fNext = firstCurr.next;',
+    '    ListNode sNext = secondCurr.next;',
+    '    firstCurr.next = secondCurr;',
+    '    secondCurr.next = fNext;',
+    '    firstCurr = fNext;',
+    '    secondCurr = sNext;',
+    '}',
+    '// Done!'
+  ];
+
+  function parse() {
+    return document.getElementById('rl-input').value.split(',').map(function(s){ return parseInt(s.trim()); }).filter(function(n){ return !isNaN(n); });
+  }
+
+  function renderCode() {
+    var panel = document.getElementById('rl-code-panel');
+    if (!panel) return;
+    panel.innerHTML = '';
+    CODE_LINES.forEach(function(line, i) {
+      var div = document.createElement('div');
+      div.className = 'rl-code-line' + (i === activeLine ? ' active' : '');
+      div.textContent = line || '\u00a0';
+      panel.appendChild(div);
+    });
+  }
+
+  function nodeBox(val, x, y, color, label) {
+    var fill = color || '#1e293b';
+    var stroke = color === '#7c3aed' ? '#a78bfa' : (color === '#059669' ? '#34d399' : '#334155');
+    var s = '';
+    s += '<rect x="' + x + '" y="' + y + '" width="48" height="32" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.5"/>';
+    s += '<text x="' + (x+24) + '" y="' + (y+21) + '" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">' + val + '</text>';
+    if (label) {
+      var lColor = label === 'fCurr' ? '#22c55e' : (label === 'sCurr' ? '#f97316' : '#94a3b8');
+      s += '<text x="' + (x+24) + '" y="' + (y-6) + '" text-anchor="middle" fill="' + lColor + '" font-size="10" font-weight="600">' + label + '</text>';
+    }
+    return s;
+  }
+
+  function arrow(x1, y1, x2, y2, color) {
+    var c = color || '#475569';
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + c + '" stroke-width="1.5" marker-end="url(#rl-arrow-' + c.replace('#','') + ')"/>';
+  }
+
+  function arrowDef(color) {
+    var c = color || '#475569';
+    var id = 'rl-arrow-' + c.replace('#','');
+    return '<marker id="' + id + '" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 3.5, 0 7" fill="' + c + '"/></marker>';
+  }
+
+  function render() {
+    var canvas = document.getElementById('rl-canvas');
+    var phaseEl = document.getElementById('rl-phase');
+    var expEl = document.getElementById('rl-explanation');
+    if (!canvas) return;
+
+    var svg = '';
+    var w = Math.max(680, (merged.length + 2) * 70);
+    svg += '<svg viewBox="0 0 ' + w + ' 200" style="width:100%;max-width:' + w + 'px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">';
+    svg += '<defs>' + arrowDef('#475569') + arrowDef('#22c55e') + arrowDef('#f97316') + arrowDef('#a78bfa') + '</defs>';
+
+    if (phase === 'split' || phase === 'reverse') {
+      // Show two rows: first half and second half
+      var rowY1 = 30, rowY2 = 110;
+      svg += '<text x="10" y="' + (rowY1 + 4) + '" fill="#22c55e" font-size="11" font-weight="600">First:</text>';
+      for (var i = 0; i < firstHalf.length; i++) {
+        var x = 70 + i * 64;
+        svg += nodeBox(firstHalf[i], x, rowY1, '#1e293b');
+        if (i < firstHalf.length - 1) svg += arrow(x + 48, rowY1 + 16, x + 64, rowY1 + 16, '#475569');
+      }
+
+      svg += '<text x="10" y="' + (rowY2 + 4) + '" fill="#f97316" font-size="11" font-weight="600">Second:</text>';
+      for (var j = 0; j < secondHalf.length; j++) {
+        var x2 = 70 + j * 64;
+        svg += nodeBox(secondHalf[j], x2, rowY2, '#1e293b');
+        if (j < secondHalf.length - 1) svg += arrow(x2 + 48, rowY2 + 16, x2 + 64, rowY2 + 16, '#475569');
+      }
+    } else {
+      // Merge phase: show the merged result so far plus remaining
+      var rowY = 30;
+      svg += '<text x="10" y="' + (rowY + 4) + '" fill="#a78bfa" font-size="11" font-weight="600">Result:</text>';
+      for (var m = 0; m < merged.length; m++) {
+        var xm = 70 + m * 64;
+        svg += nodeBox(merged[m], xm, rowY, '#1e293b');
+        if (m < merged.length - 1) svg += arrow(xm + 48, rowY + 16, xm + 64, rowY + 16, '#a78bfa');
+      }
+
+      // Show remaining first half
+      var rowYF = 110, rowYS = 150;
+      if (firstCurr < firstHalf.length) {
+        svg += '<text x="10" y="' + (rowYF + 4) + '" fill="#22c55e" font-size="10">fCurr:</text>';
+        for (var fi = firstCurr; fi < firstHalf.length; fi++) {
+          var xf = 70 + (fi - firstCurr) * 64;
+          var fLabel = fi === firstCurr ? 'fCurr' : null;
+          svg += nodeBox(firstHalf[fi], xf, rowYF, '#1e293b', fLabel);
+          if (fi < firstHalf.length - 1) svg += arrow(xf + 48, rowYF + 16, xf + 64, rowYF + 16, '#475569');
+        }
+      }
+
+      // Show remaining second half
+      if (secondCurr < secondHalf.length) {
+        svg += '<text x="10" y="' + (rowYS + 4) + '" fill="#f97316" font-size="10">sCurr:</text>';
+        for (var si = secondCurr; si < secondHalf.length; si++) {
+          var xs = 70 + (si - secondCurr) * 64;
+          var sLabel = si === secondCurr ? 'sCurr' : null;
+          svg += nodeBox(secondHalf[si], xs, rowYS, '#1e293b', sLabel);
+          if (si < secondHalf.length - 1) svg += arrow(xs + 48, rowYS + 16, xs + 64, rowYS + 16, '#475569');
+        }
+      }
+    }
+
+    svg += '</svg>';
+    canvas.innerHTML = svg;
+
+    if (phaseEl) {
+      var pText = phase === 'split' ? 'Phase 1: Find Mid & Split' : phase === 'reverse' ? 'Phase 2: Reverse Second Half' : done ? 'Done!' : 'Phase 3: Merge (Interleave)';
+      phaseEl.innerHTML = pText;
+    }
+    if (expEl) expEl.innerHTML = explanation || '';
+    renderCode();
+  }
+
+  function addLog(msg) {
+    log.push(msg);
+    var el = document.getElementById('rl-log');
+    if (el) { el.textContent = log.join('\n'); el.scrollTop = el.scrollHeight; }
+  }
+
+  window.rlReset = function() {
+    var input = parse();
+    var midIdx = Math.floor((input.length - 1) / 2);
+    firstHalf = input.slice(0, midIdx + 1);
+    secondHalf = input.slice(midIdx + 1);
+    merged = [];
+    firstCurr = 0;
+    secondCurr = 0;
+    phase = 'split';
+    done = false;
+    log = [];
+    activeLine = 0;
+    stepDetail = 0;
+    explanation = 'Original list: [' + input.join(' → ') + ']. Click Step to begin.';
+    var el = document.getElementById('rl-log');
+    if (el) el.textContent = 'Ready. Click Step to begin.';
+    render();
+  };
+
+  window.rlStep = function() {
+    if (done) return;
+
+    // Phase 1: Split
+    if (phase === 'split') {
+      activeLine = 2;
+      explanation = 'Find mid (slow/fast). Split into:<br><span style="color:#22c55e">First: [' + firstHalf.join(' → ') + ']</span><br><span style="color:#f97316">Second: [' + secondHalf.join(' → ') + ']</span>';
+      addLog('Split at mid → First: [' + firstHalf.join(',') + '], Second: [' + secondHalf.join(',') + ']');
+      phase = 'reverse';
+      render();
+      return;
+    }
+
+    // Phase 2: Reverse second half
+    if (phase === 'reverse') {
+      activeLine = 3;
+      secondHalf.reverse();
+      explanation = 'Reverse second half:<br><span style="color:#f97316">[' + secondHalf.join(' → ') + ']</span>';
+      addLog('Reverse second half → [' + secondHalf.join(',') + ']');
+      phase = 'merge';
+      firstCurr = 0;
+      secondCurr = 0;
+      render();
+      return;
+    }
+
+    // Phase 3: Merge interleave
+    if (secondCurr >= secondHalf.length) {
+      // Append remaining first half nodes
+      while (firstCurr < firstHalf.length) {
+        merged.push(firstHalf[firstCurr]);
+        firstCurr++;
+      }
+      done = true;
+      activeLine = 13;
+      explanation = '<span style="color:#22c55e;font-weight:600">Done!</span> Result: [' + merged.join(' → ') + ']';
+      addLog('DONE → [' + merged.join(' → ') + ']');
+      render();
+      return;
+    }
+
+    if (stepDetail === 0) {
+      // Save fNext and sNext
+      activeLine = 6;
+      var fVal = firstHalf[firstCurr];
+      var sVal = secondHalf[secondCurr];
+      var fNext = firstCurr + 1 < firstHalf.length ? firstHalf[firstCurr + 1] : 'null';
+      var sNext = secondCurr + 1 < secondHalf.length ? secondHalf[secondCurr + 1] : 'null';
+      explanation = '<code>fNext = ' + fNext + '</code>, <code>sNext = ' + sNext + '</code><br><span style="color:#64748b">Save both next pointers before rewiring.</span>';
+      addLog('Save fNext=' + fNext + ', sNext=' + sNext);
+      stepDetail = 1;
+      render();
+      return;
+    }
+
+    if (stepDetail === 1) {
+      // Wire: firstCurr → secondCurr → fNext
+      activeLine = 8;
+      var fVal = firstHalf[firstCurr];
+      var sVal = secondHalf[secondCurr];
+      merged.push(fVal);
+      merged.push(sVal);
+      explanation = '<code>' + fVal + '.next = ' + sVal + '</code> → <code>' + sVal + '.next = fNext</code><br><span style="color:#a78bfa">Stitch ' + sVal + ' between ' + fVal + ' and the next first-half node.</span>';
+      addLog(fVal + ' → ' + sVal + ' → (fNext)');
+      firstCurr++;
+      secondCurr++;
+      stepDetail = 0;
+
+      // Check if second is exhausted, append remaining first
+      if (secondCurr >= secondHalf.length) {
+        while (firstCurr < firstHalf.length) {
+          merged.push(firstHalf[firstCurr]);
+          firstCurr++;
+        }
+        activeLine = 12;
+        explanation += '<br><span style="color:#22c55e;font-weight:600">secondCurr is null — merge complete!</span> Result: [' + merged.join(' → ') + ']';
+        addLog('DONE → [' + merged.join(' → ') + ']');
+        done = true;
+      }
+
+      activeLine = done ? 13 : 10;
+      render();
+      return;
+    }
+  };
+
+  window.rlRunAll = function() {
+    if (done) return;
+    var run = function() {
+      if (!done) {
+        rlStep();
+        if (!done) setTimeout(run, 700);
+      }
+    };
+    run();
+  };
+
+  var rlObs = new MutationObserver(function() {
+    var root = document.getElementById('rl-root');
+    if (root && !root.dataset.rlInit) {
+      root.dataset.rlInit = '1';
+      rlReset();
+    }
+  });
+  rlObs.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
 </body>

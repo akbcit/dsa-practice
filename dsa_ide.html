@@ -5611,6 +5611,8 @@ require(['vs/editor/editor.main'], function () {
     smoothScrolling: true,
     cursorBlinking: 'smooth',
     cursorSmoothCaretAnimation: 'on',
+    formatOnPaste: true,
+    autoIndent: 'full',
   });
 
   // ─── FORMAT CODE BUTTON ───────────────────────────────────────────────────
@@ -5618,16 +5620,48 @@ require(['vs/editor/editor.main'], function () {
     const code = editor.getValue();
     const lines = code.split('\n');
     let indent = 0;
+    let caseBodyExtra = 0;
+    let depthSinceCase = 0;
+
     const formatted = lines.map(line => {
       const trimmed = line.trim();
       if (!trimmed) return '';
-      // decrease indent for closing braces before printing
-      if (trimmed.startsWith('}')) indent = Math.max(0, indent - 1);
+
+      const isCase = /^(case\s.+:|default\s*:)/.test(trimmed);
+      const startsWithClose = trimmed[0] === '}';
+
+      // 1. Closing brace — decrease indent
+      if (startsWithClose) {
+        indent = Math.max(0, indent - 1);
+        if (caseBodyExtra && depthSinceCase > 0) {
+          depthSinceCase--;
+        } else if (caseBodyExtra && depthSinceCase === 0) {
+          indent = Math.max(0, indent - 1);
+          caseBodyExtra = 0;
+        }
+      }
+
+      // 2. New case/default — undo previous case's extra indent
+      if (isCase && caseBodyExtra) {
+        indent = Math.max(0, indent - 1);
+      }
+
       const result = '    '.repeat(indent) + trimmed;
-      // increase indent after opening braces
-      const opens = (trimmed.match(/\{/g) || []).length;
-      const closes = (trimmed.match(/\}/g) || []).length;
+
+      // 3. Count braces (skip leading } already handled above)
+      const rest = startsWithClose ? trimmed.slice(1) : trimmed;
+      const opens = (rest.match(/\{/g) || []).length;
+      const closes = (rest.match(/\}/g) || []).length;
       indent = Math.max(0, indent + opens - closes);
+      if (caseBodyExtra) depthSinceCase += opens - closes;
+
+      // 4. case/default increases indent for body
+      if (isCase) {
+        indent++;
+        caseBodyExtra = 1;
+        depthSinceCase = 0;
+      }
+
       return result;
     });
     editor.setValue(formatted.join('\n'));
@@ -5824,7 +5858,7 @@ require(['vs/editor/editor.main'], function () {
     }
 
     // Pre-seed guides. GUIDE_VERSIONS controls when to overwrite (bump version = force refresh).
-    const GUIDE_VERSIONS = { 347: 3, 128: 1, 238: 1, 125: 1, 11: 1, 3: 1, 206: 1, 21: 1, 141: 2, 75: 1, 26: 1 };
+    const GUIDE_VERSIONS = { 2: 1, 347: 3, 128: 1, 238: 1, 125: 1, 11: 1, 3: 1, 206: 1, 21: 1, 141: 2, 75: 1, 26: 1, 27: 1, 150: 1 };
     const SEEDED_GUIDES = {
       21: `## 21. Merge Two Sorted Lists\n\n### What is the problem asking?\n\nYou have two sorted linked lists. Merge them into one sorted linked list by rewiring the pointers — don't create new nodes.\n\n\`\`\`\nlist1:  1 → 2 → 4\nlist2:  1 → 3 → 4\nresult: 1 → 1 → 2 → 3 → 4 → 4\n\`\`\`\n\n---\n\n### The intuition — two piles of cards\n\nImagine two sorted piles of cards face-up. Each step you:\n1. Look at the top card of each pile\n2. Pick the smaller one\n3. Advance that pile forward\n\n\`\`\`\npile1:  1 → 2 → 4\npile2:  1 → 3 → 4\n\n1 vs 1 → pick left (tie)    result: 1\n2 vs 1 → pick right         result: 1 → 1\n2 vs 3 → pick left          result: 1 → 1 → 2\n4 vs 3 → pick right         result: 1 → 1 → 2 → 3\n4 vs 4 → pick left          result: 1 → 1 → 2 → 3 → 4\npile1 empty → attach rest   result: 1 → 1 → 2 → 3 → 4 → 4\n\`\`\`\n\nYou never need to look beyond the top card. Just compare and pick.\n\n---\n\n### The dummy node — why you need it\n\nWhen you pick the first node, you have nothing to attach it TO yet. A dummy node solves this — create a throwaway node so curr.next = node works from the very first pick.\n\n\`\`\`\ndummy[0] → (nothing yet)\ncurr → dummy           ← curr starts HERE, at dummy\n\`\`\`\n\nAfter picking node [1]:\n\`\`\`\ndummy[0] → [1]\n             ↑ curr moves here\n\`\`\`\n\nAt the end return dummy.next to skip the throwaway [0].\n\n**dummy never moves. curr walks forward every step.**\n\n---\n\n### The three operations every iteration\n\nEach iteration does exactly three things:\n\n\`\`\`csharp\ncurr.next = list1;        // 1. WELD — attach the picked node onto the chain\nlist1 = list1.next;       // 2. ADVANCE PILE — move that list forward one\ncurr = curr.next;         // 3. ADVANCE CURR — move your result finger forward\n\`\`\`\n\nThe mistake to avoid: curr = list1 just moves your finger to that node. It does NOT weld it onto anything. You need curr.next = list1.\n\n---\n\n### Why && not ||\n\n\`\`\`csharp\nwhile (list1 != null && list2 != null)  // CORRECT\nwhile (list1 != null || list2 != null)  // CRASH\n\`\`\`\n\nWith ||: if list1 runs out you still enter the loop and hit list1.val → NullReferenceException.\n\nWith &&: exit as soon as either list runs out. Then attach the remaining list — it is already sorted:\n\n\`\`\`csharp\ncurr.next = list1 ?? list2;\n\`\`\`\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic ListNode MergeTwoLists(ListNode list1, ListNode list2) {\n    ListNode dummy = new ListNode(0);\n    ListNode curr = dummy;\n\n    while (list1 != null && list2 != null) {\n        if (list1.val <= list2.val) {\n            curr.next = list1;\n            list1 = list1.next;\n        } else {\n            curr.next = list2;\n            list2 = list2.next;\n        }\n        curr = curr.next;\n    }\n\n    curr.next = list1 ?? list2;\n    return dummy.next;\n}\n\`\`\`\n\n---\n\n### Complexity\n\n| | |\n|---|---|\n| Time | O(n + m) — visit each node once |\n| Space | O(1) — no new nodes, just pointer rewiring |`,
       141: `## 141. Linked List Cycle\n\n### What is the problem asking?\n\nGiven the head of a linked list, return true if there is a cycle — i.e. some node's .next points back to an earlier node, creating an infinite loop.\n\n---\n\n### Approach 1 — HashSet (your first instinct)\n\nSave every node you visit. If you see a node you've already saved, there's a cycle.\n\n\`\`\`csharp\nvar seen = new HashSet<ListNode>();\nvar cur = head;\nwhile (cur != null) {\n    if (seen.Contains(cur)) return true;\n    seen.Add(cur);\n    cur = cur.next;\n}\nreturn false;\n\`\`\`\n\n**Time:** O(n) — **Space:** O(n) — works, but uses extra memory.\n\n---\n\n### Approach 2 — Fast and slow pointers (Floyd's algorithm)\n\nNo extra memory. Two pointers start at head. Slow moves 1 step. Fast moves 2 steps.\n\n**No cycle:** fast runs off the end → return false\n\n**Cycle:** fast laps slow and they land on the same node → return true\n\n**Why do they always meet?**\n\nOnce fast enters the cycle, measure the gap between fast and slow in nodes (going forward around the cycle).\n\nEach step: slow moves 1, fast moves 2 → gap shrinks by exactly 1.\n\n\`\`\`\ngap = 4 → 3 → 2 → 1 → 0  ← they meet\n\`\`\`\n\nThe gap starts at some number and decrements by 1 every step. It must hit 0 — it can never skip over 0 because it only ever decrements by 1. When the gap is 0, slow == fast.\n\n\`\`\`\nList: 3 → 2 → 0 → -4\n               ↑         |\n               └─────────┘\n\nStart:   slow=3  fast=3\nStep 1:  slow=2  fast=0\nStep 2:  slow=0  fast=2    (fast lapped around)\nStep 3:  slow=-4 fast=-4   ← MEET → cycle detected\n\`\`\`\n\n**No cycle:**\n\`\`\`\n1 → 2 → null\n\nStep 1:  slow=2  fast=null → loop exits → return false\n\`\`\`\n\n---\n\n### Why check slow == fast AFTER moving?\n\nBoth start at head. If you check before moving, slow==fast immediately (both at head) and you'd return true wrongly. Move first, then check.\n\n---\n\n### Why the loop condition is fast != null && fast.next != null?\n\n- \`fast != null\` — fast itself might be null (even-length list)\n- \`fast.next != null\` — you're about to do fast.next.next, so fast.next must exist first\n\nIf either is null, there's no cycle — a cycle has no null.\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic bool HasCycle(ListNode head) {\n    ListNode slow = head;\n    ListNode fast = head;\n\n    while (fast != null && fast.next != null) {\n        slow = slow.next;\n        fast = fast.next.next;\n\n        if (slow == fast) return true;\n    }\n\n    return false;\n}\n\`\`\`\n\n---\n\n### Complexity\n\n| | HashSet | Fast/Slow |\n|---|---|---|\n| Time | O(n) | O(n) |\n| Space | O(n) | O(1) |`,
@@ -6723,6 +6757,179 @@ public void SortColors(int[] nums) {
 - **Time:** O(n) — single pass, mid visits each element once
 - **Space:** O(1) — just three pointer variables`,
       26: `## 26. Remove Duplicates from Sorted Array\n\n### What is the problem asking?\n\nGiven a sorted array, remove duplicates **in-place** so each unique value appears only once. Return k — the number of unique elements. The first k slots of the array must hold those unique values.\n\n\`\`\`\nnums = [1, 1, 2]        → k = 2, nums = [1, 2, _]\nnums = [0,0,1,1,1,2,2,3,3,4] → k = 5, nums = [0,1,2,3,4,_,_,_,_,_]\n\`\`\`\n\nYou don't need to worry about what's in the slots after k — the judge ignores them.\n\n---\n\n### Why is this problem easy to overthink?\n\nYour first instinct might be: "I need to shift elements, or use a Set, or splice things out." But none of that is needed. The key insight is:\n\n**The array is already sorted.**\n\nThat means all duplicates are right next to each other. You never need to search or look far — just compare neighbors.\n\n---\n\n### The core insight — two pointers doing two different jobs\n\nImagine two fingers on the array:\n\n- **write pointer (w)** — marks where the next unique value should be placed. Think of it as the "builder" of the clean array.\n- **read pointer (r)** — scans forward through every element. Think of it as the "scout" looking for new values.\n\nThe rule is dead simple:\n\n> If the scout finds something different from what's at the last written position, copy it to the write position and advance the writer.\n\n---\n\n### Walk through it\n\n\`\`\`\nnums = [0, 0, 1, 1, 1, 2, 2, 3, 3, 4]\n        w  r\n\`\`\`\n\nw starts at 0 (first element is always unique). r starts at 1.\n\n\`\`\`\nr=1: nums[1]=0, nums[w]=0  → same, skip\nr=2: nums[2]=1, nums[w]=0  → different! w++ → w=1, nums[1]=1\nr=3: nums[3]=1, nums[w]=1  → same, skip\nr=4: nums[4]=1, nums[w]=1  → same, skip\nr=5: nums[5]=2, nums[w]=1  → different! w++ → w=2, nums[2]=2\nr=6: nums[6]=2, nums[w]=2  → same, skip\nr=7: nums[7]=3, nums[w]=2  → different! w++ → w=3, nums[3]=3\nr=8: nums[8]=3, nums[w]=3  → same, skip\nr=9: nums[9]=4, nums[w]=3  → different! w++ → w=4, nums[4]=4\n\`\`\`\n\nResult: w=4, so k = w+1 = 5.\n\`\`\`\nnums = [0, 1, 2, 3, 4, ...]\n        ↑              ↑\n        first k=5 slots = answer\n\`\`\`\n\n---\n\n### Why compare nums[r] to nums[w], not nums[r] to nums[r-1]?\n\nBoth work here, but comparing to nums[w] is the more general pattern — it tells you "is this value different from the last thing I placed?" This same idea extends to problems like LC 80 (allow 2 duplicates) where you compare nums[r] to nums[w-2].\n\n---\n\n### Edge case\n\nIf the array is empty, return 0. If it has 1 element, it's already unique — return 1.\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic int RemoveDuplicates(int[] nums) {\n    if (nums.Length == 0) return 0;\n\n    int w = 0;\n\n    for (int r = 1; r < nums.Length; r++) {\n        if (nums[r] != nums[w]) {\n            w++;\n            nums[w] = nums[r];\n        }\n    }\n\n    return w + 1;\n}\n\`\`\`\n\n---\n\n### Why w + 1?\n\nw is a 0-based index. After the loop, w points at the last unique element. The count of unique elements is w + 1.\n\n---\n\n### Complexity\n\n| | |\n|---|---|\n| Time | O(n) — single pass through the array |\n| Space | O(1) — just two pointer variables |`,
+      27: `## 27. Remove Element\n\n### What is the problem asking?\n\nGiven an array and a value \`val\`, remove all occurrences of \`val\` **in-place**. Return k — the number of elements that are NOT val. The first k slots of the array must hold those kept elements.\n\n\`\`\`\nnums = [3, 2, 2, 3], val = 3  → k = 2, nums = [2, 2, _, _]\nnums = [0,1,2,2,3,0,4,2], val = 2 → k = 5, nums = [0,1,3,0,4,_,_,_]\n\`\`\`\n\nAnything after index k-1 is garbage — the judge ignores it.\n\n---\n\n### What does "in-place" mean?\n\nYou don't create a new array. You rearrange the **same** array so the first k slots hold the values you want to keep.\n\nThe problem has TWO jobs:\n1. **Count** how many elements are not val → return that as k\n2. **Move** those elements to the front of the array\n\nJust counting isn't enough — the judge checks the actual array contents.\n\n---\n\n### The idea — read pointer and write pointer\n\nTwo pointers doing two different jobs:\n\n- **r (read)** — scans every element left to right\n- **w (write)** — marks where to place the next keeper\n\nTwo rules:\n- \`nums[r] == val\` → skip → move r only. w stays.\n- \`nums[r] != val\` → keep → copy \`nums[r]\` into \`nums[w]\`, move BOTH r and w.\n\n---\n\n### Walk through it\n\n\`\`\`\nnums = [3, 2, 2, 3],  val = 3\n\nr=0: nums[0]=3 → equals val → skip              w=0\nr=1: nums[1]=2 → not val → nums[0]=2, w=1       w=1\nr=2: nums[2]=2 → not val → nums[1]=2, w=2       w=2\nr=3: nums[3]=3 → equals val → skip              w=2\n\nResult: [2, 2, 2, 3]   w=2\n         ↑--↑  ↑-----↑\n         kept  garbage (ignored)\n\`\`\`\n\nThe array in memory ends up as [2, 2, 2, 3] — the 2 and 3 at the tail are leftover values that were never overwritten. That's fine. The judge only checks nums[0] to nums[w-1].\n\n---\n\n### Why does w double as the count?\n\nw is where the **next** keep would go. But when the loop ends, there is no next keep. So everything before w (indices 0 to w-1) was written by us — those are the keepers. Everything from w onwards was never touched. So w IS the count.\n\n---\n\n### Order matters: copy THEN advance w\n\n\`\`\`csharp\nnums[w] = nums[r];   // 1. copy first\nw++;                  // 2. then advance\n\`\`\`\n\nIf you advance w before copying, you write to the wrong slot.\n\n---\n\n### How is this different from LC 26 (Remove Duplicates)?\n\n**LC 26:** w++ THEN copy — because nums[0] is always kept (first element can't be a duplicate), so w=0 already points at a valid value. You advance first to get to the next empty slot.\n\n**LC 27:** copy THEN w++ — because nothing is pre-kept. Even nums[0] might be the value to remove. So w=0 is the first empty slot. Write first, then advance.\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic int RemoveElement(int[] nums, int val) {\n    int w = 0;\n\n    for (int r = 0; r < nums.Length; r++) {\n        if (nums[r] != val) {\n            nums[w] = nums[r];\n            w++;\n        }\n    }\n\n    return w;\n}\n\`\`\`\n\n---\n\n### Why w, not w + 1?\n\nIn LC 26 you return w + 1 because w starts at 0 pointing at a kept element. Here w starts at 0 meaning "nothing kept yet" — each write advances w, so w already equals the count.\n\n---\n\n### Complexity\n\n| | |\n|---|---|\n| Time | O(n) — single pass through the array |\n| Space | O(1) — just two pointer variables |`,
+      150: `## 150. Evaluate Reverse Polish Notation
+
+### What is the problem asking?
+
+You're given an array of strings where each string is either a number or one of \`+\`, \`-\`, \`*\`, \`/\`. Evaluate the expression written in **Reverse Polish Notation** (postfix) and return the integer result.
+
+\`\`\`
+["2","1","+","3","*"]  → ((2 + 1) * 3) = 9
+["4","13","5","/","+"] → (4 + (13 / 5)) = 4 + 2 = 6
+\`\`\`
+
+Division truncates toward zero: \`-7 / 2 = -3\`, not \`-4\`.
+
+---
+
+### What even is Reverse Polish Notation?
+
+In normal math (infix) you write \`2 + 3\`. The operator sits **between** the operands.
+
+In RPN (postfix) you write \`2 3 +\`. The operator comes **after** its operands.
+
+Why does RPN exist? Because it removes all ambiguity about order of operations — no parentheses needed. Every operator grabs exactly the two values immediately before it.
+
+\`\`\`
+Infix:    (2 + 1) * 3
+Postfix:  2 1 + 3 *
+
+Infix:    4 + (13 / 5)
+Postfix:  4 13 5 / +
+\`\`\`
+
+---
+
+### The core insight — a stack is the natural fit
+
+Read left to right. When you hit a number, you don't know what to do with it yet — you're waiting for an operator. So you **save it for later**. That's a stack.
+
+When you hit an operator, you need two operands. Where are they? The two most recently saved numbers — the top two items on the stack. Pop them, compute, push the result back.
+
+That result might itself become an operand for a later operator. The stack handles that naturally.
+
+---
+
+### Walk through it
+
+\`\`\`
+tokens = ["2", "1", "+", "3", "*"]
+stack = []
+
+"2"  → number → push            stack: [2]
+"1"  → number → push            stack: [2, 1]
+"+"  → operator → pop 1, pop 2  → 2 + 1 = 3 → push   stack: [3]
+"3"  → number → push            stack: [3, 3]
+"*"  → operator → pop 3, pop 3  → 3 * 3 = 9 → push   stack: [9]
+
+Done. Answer = stack top = 9
+\`\`\`
+
+---
+
+### The order trap — which operand is which?
+
+When you pop two values, the **first pop is the right operand** and the **second pop is the left operand**.
+
+\`\`\`csharp
+int b = stack.Pop();   // right operand (popped first)
+int a = stack.Pop();   // left operand  (popped second)
+result = a ○ b         // a operator b, NOT b operator a
+\`\`\`
+
+For \`+\` and \`*\` order doesn't matter (commutative). But for \`-\` and \`/\` it absolutely does:
+
+\`\`\`
+tokens = ["6", "2", "-"]
+
+Pop b=2, pop a=6
+a - b = 6 - 2 = 4  ✓
+b - a = 2 - 6 = -4 ✗
+\`\`\`
+
+Why? Because in RPN \`6 2 -\` means "6 minus 2". The 6 was pushed first (deeper in the stack), so it's the left operand.
+
+---
+
+### A harder example
+
+\`\`\`
+tokens = ["10","6","9","3","+","-11","*","/","*","17","+","5","+"]
+
+"10"  → push                       stack: [10]
+"6"   → push                       stack: [10, 6]
+"9"   → push                       stack: [10, 6, 9]
+"3"   → push                       stack: [10, 6, 9, 3]
+"+"   → pop 3, pop 9  → 9+3=12    stack: [10, 6, 12]
+"-11" → push                       stack: [10, 6, 12, -11]
+"*"   → pop -11, pop 12 → 12*-11=-132  stack: [10, 6, -132]
+"/"   → pop -132, pop 6 → 6/-132=0     stack: [10, 0]
+"*"   → pop 0, pop 10 → 10*0=0    stack: [0]
+"17"  → push                       stack: [0, 17]
+"+"   → pop 17, pop 0 → 0+17=17   stack: [17]
+"5"   → push                       stack: [17, 5]
+"+"   → pop 5, pop 17 → 17+5=22   stack: [22]
+
+Answer: 22
+\`\`\`
+
+Notice how the stack naturally handles nested expressions — intermediate results stay on the stack and become operands for later operators.
+
+---
+
+### How to check if a token is a number or operator?
+
+A token is an operator if it's exactly one of \`+\`, \`-\`, \`*\`, \`/\`. Everything else is a number (including negative numbers like \`"-11"\`).
+
+Don't try to check "is it a digit?" — negative numbers start with \`-\`, which would confuse that check. Just check if the token matches one of the four operators.
+
+---
+
+### Division truncates toward zero
+
+C# integer division already truncates toward zero, so \`6 / -132\` gives \`0\` and \`-7 / 2\` gives \`-3\` — no extra work needed. In some languages (like Python) you'd need \`int(a / b)\` instead of \`a // b\` because \`//\` floors toward negative infinity.
+
+---
+
+### Full solution
+
+\`\`\`csharp
+public int EvalRPN(string[] tokens) {
+    var stack = new Stack<int>();
+
+    foreach (string token in tokens) {
+        if (token == "+" || token == "-" || token == "*" || token == "/") {
+            int b = stack.Pop();
+            int a = stack.Pop();
+
+            int result = token switch {
+                "+" => a + b,
+                "-" => a - b,
+                "*" => a * b,
+                "/" => a / b,
+                _ => 0
+            };
+
+            stack.Push(result);
+        } else {
+            stack.Push(int.Parse(token));
+        }
+    }
+
+    return stack.Pop();
+}
+\`\`\`
+
+---
+
+### Why does this always work?
+
+A valid RPN expression guarantees:
+- When you hit an operator, there are always at least 2 values on the stack
+- When you finish, there is exactly 1 value on the stack — the answer
+
+If either of these isn't true, the input is invalid (but the problem says input is always valid).
+
+---
+
+### Complexity
+
+| | |
+|---|---|
+| Time | O(n) — single pass through the tokens array |
+| Space | O(n) — stack holds at most all the numbers (roughly n/2 in the worst case) |`,
+      2: `## 2. Add Two Numbers\n\n### What is the problem asking?\n\nYou have two linked lists, each representing a number in **reverse digit order**. Add them and return the sum as a linked list, also in reverse order.\n\n\`\`\`\nl1:  2 → 4 → 3       (represents 342)\nl2:  5 → 6 → 4       (represents 465)\nout: 7 → 0 → 8       (represents 807 = 342 + 465)\n\`\`\`\n\nReverse order is actually convenient — the ones digit is first, so you can add left-to-right just like you would on paper right-to-left.\n\n---\n\n### Step 1 — Walk both lists together\n\nJust like adding two numbers on paper: process one column at a time.\n\n\`\`\`\n  l1:  2   4   3\n  l2:  5   6   4\n       ↓   ↓   ↓\nsum:   7  10   7\n\`\`\`\n\nBut what if the lists are different lengths?\n\n\`\`\`\nl1:  9 → 9 → 9 → 9 → 9 → 9 → 9\nl2:  9 → 9 → 9 → 9\n\`\`\`\n\nThe shorter list runs out first. When a list is exhausted, treat its digit as 0 — same as how you'd pad with leading zeros on paper.\n\nSo the while loop uses **||** (keep going if EITHER has digits left), not **&&**:\n\n\`\`\`csharp\nwhile (firstCurr != null || secondCurr != null)\n\`\`\`\n\nInside, safely get each value:\n\n\`\`\`csharp\nint a = firstCurr != null ? firstCurr.val : 0;\nint b = secondCurr != null ? secondCurr.val : 0;\n\`\`\`\n\n---\n\n### Step 2 — Handle the carry\n\nWhen digits sum to 10+, you carry to the next column. For any sum:\n\n\`\`\`\ndigit = sum % 10    (ones place — the digit you keep)\ncarry = sum / 10    (tens place — what carries forward)\n\`\`\`\n\nExample: 9 + 9 + 1 (carry) = 19 → digit = 9, carry = 1\n\ncarry persists across iterations — declare it outside the loop.\n\n---\n\n### Step 3 — Build the result with a dummy head\n\nYou don't know the first result node until you compute the first sum. A dummy node gives you something to attach to from the start:\n\n\`\`\`\ndummy[0] → (nothing yet)\nresultCurr → dummy\n\`\`\`\n\nEach iteration: create a new node and link it:\n\n\`\`\`csharp\nresultCurr.next = new ListNode(digit);\nresultCurr = resultCurr.next;\n\`\`\`\n\nAfter the loop, return dummy.next (skip the throwaway 0).\n\n---\n\n### Step 4 — Don't forget the final carry\n\n\`\`\`\n  999 + 1 = 1000\n  9 → 9 → 9\n  1\n  ─────────\n  0 → 0 → 0 → 1   ← this last 1 comes from carry AFTER the loop\n\`\`\`\n\nAfter the while loop:\n\n\`\`\`csharp\nif (carry > 0) {\n    resultCurr.next = new ListNode(carry);\n}\n\`\`\`\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic ListNode AddTwoNumbers(ListNode l1, ListNode l2) {\n    ListNode dummy = new ListNode(0);\n    ListNode curr = dummy;\n    int carry = 0;\n\n    while (l1 != null || l2 != null) {\n        int a = l1 != null ? l1.val : 0;\n        int b = l2 != null ? l2.val : 0;\n        int sum = a + b + carry;\n\n        carry = sum / 10;\n        curr.next = new ListNode(sum % 10);\n        curr = curr.next;\n\n        if (l1 != null) l1 = l1.next;\n        if (l2 != null) l2 = l2.next;\n    }\n\n    if (carry > 0) {\n        curr.next = new ListNode(carry);\n    }\n\n    return dummy.next;\n}\n\`\`\`\n\n---\n\n### Common mistakes\n\n| Mistake | Why it breaks |\n|---|---|\n| while (l1 != null **&&** l2 != null) | Stops early when lists differ in length |\n| l1.val when l1 could be null | NullReferenceException — check before accessing |\n| Forgetting carry after loop | Loses the leading digit (e.g. 999+1 = 000 instead of 0001) |\n| curr.val = digit instead of curr.next = new ListNode(digit) | Doesn't create new nodes — crashes on next iteration |\n| Shadowing carry inside the loop | Outer carry never updates, always 0 |\n\n---\n\n### Complexity\n\n| | |\n|---|---|\n| Time | O(max(n, m)) — one pass through the longer list |\n| Space | O(max(n, m)) — the result list has at most max(n,m) + 1 nodes |`,
     };
     for (const [pid, text] of Object.entries(SEEDED_GUIDES)) {
       const vkey = `dsa_guide_v_${pid}`;
