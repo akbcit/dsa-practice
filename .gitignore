@@ -1,0 +1,18 @@
+node_modules/
+.claude/
+
+# Job search files - private
+*.pdf
+*.docx
+headshot.jpg
+resume.html
+Cover_Letter_*.html
+tracker.html
+save_pdf.js
+serve_resume.js
+html2pdf.bundle.min.js
+package.json
+package-lock.json
+
+# Misc
+1
