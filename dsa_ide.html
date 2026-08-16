@@ -5858,7 +5858,7 @@ require(['vs/editor/editor.main'], function () {
     }
 
     // Pre-seed guides. GUIDE_VERSIONS controls when to overwrite (bump version = force refresh).
-    const GUIDE_VERSIONS = { 2: 1, 347: 3, 128: 1, 238: 1, 125: 1, 11: 1, 3: 1, 206: 1, 21: 1, 141: 2, 75: 1, 26: 1, 27: 1, 150: 1 };
+    const GUIDE_VERSIONS = { 2: 1, 347: 3, 128: 1, 238: 1, 125: 1, 11: 1, 3: 1, 206: 1, 21: 1, 141: 2, 75: 1, 26: 1, 27: 1, 150: 1, 973: 1 };
     const SEEDED_GUIDES = {
       21: `## 21. Merge Two Sorted Lists\n\n### What is the problem asking?\n\nYou have two sorted linked lists. Merge them into one sorted linked list by rewiring the pointers — don't create new nodes.\n\n\`\`\`\nlist1:  1 → 2 → 4\nlist2:  1 → 3 → 4\nresult: 1 → 1 → 2 → 3 → 4 → 4\n\`\`\`\n\n---\n\n### The intuition — two piles of cards\n\nImagine two sorted piles of cards face-up. Each step you:\n1. Look at the top card of each pile\n2. Pick the smaller one\n3. Advance that pile forward\n\n\`\`\`\npile1:  1 → 2 → 4\npile2:  1 → 3 → 4\n\n1 vs 1 → pick left (tie)    result: 1\n2 vs 1 → pick right         result: 1 → 1\n2 vs 3 → pick left          result: 1 → 1 → 2\n4 vs 3 → pick right         result: 1 → 1 → 2 → 3\n4 vs 4 → pick left          result: 1 → 1 → 2 → 3 → 4\npile1 empty → attach rest   result: 1 → 1 → 2 → 3 → 4 → 4\n\`\`\`\n\nYou never need to look beyond the top card. Just compare and pick.\n\n---\n\n### The dummy node — why you need it\n\nWhen you pick the first node, you have nothing to attach it TO yet. A dummy node solves this — create a throwaway node so curr.next = node works from the very first pick.\n\n\`\`\`\ndummy[0] → (nothing yet)\ncurr → dummy           ← curr starts HERE, at dummy\n\`\`\`\n\nAfter picking node [1]:\n\`\`\`\ndummy[0] → [1]\n             ↑ curr moves here\n\`\`\`\n\nAt the end return dummy.next to skip the throwaway [0].\n\n**dummy never moves. curr walks forward every step.**\n\n---\n\n### The three operations every iteration\n\nEach iteration does exactly three things:\n\n\`\`\`csharp\ncurr.next = list1;        // 1. WELD — attach the picked node onto the chain\nlist1 = list1.next;       // 2. ADVANCE PILE — move that list forward one\ncurr = curr.next;         // 3. ADVANCE CURR — move your result finger forward\n\`\`\`\n\nThe mistake to avoid: curr = list1 just moves your finger to that node. It does NOT weld it onto anything. You need curr.next = list1.\n\n---\n\n### Why && not ||\n\n\`\`\`csharp\nwhile (list1 != null && list2 != null)  // CORRECT\nwhile (list1 != null || list2 != null)  // CRASH\n\`\`\`\n\nWith ||: if list1 runs out you still enter the loop and hit list1.val → NullReferenceException.\n\nWith &&: exit as soon as either list runs out. Then attach the remaining list — it is already sorted:\n\n\`\`\`csharp\ncurr.next = list1 ?? list2;\n\`\`\`\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic ListNode MergeTwoLists(ListNode list1, ListNode list2) {\n    ListNode dummy = new ListNode(0);\n    ListNode curr = dummy;\n\n    while (list1 != null && list2 != null) {\n        if (list1.val <= list2.val) {\n            curr.next = list1;\n            list1 = list1.next;\n        } else {\n            curr.next = list2;\n            list2 = list2.next;\n        }\n        curr = curr.next;\n    }\n\n    curr.next = list1 ?? list2;\n    return dummy.next;\n}\n\`\`\`\n\n---\n\n### Complexity\n\n| | |\n|---|---|\n| Time | O(n + m) — visit each node once |\n| Space | O(1) — no new nodes, just pointer rewiring |`,
       141: `## 141. Linked List Cycle\n\n### What is the problem asking?\n\nGiven the head of a linked list, return true if there is a cycle — i.e. some node's .next points back to an earlier node, creating an infinite loop.\n\n---\n\n### Approach 1 — HashSet (your first instinct)\n\nSave every node you visit. If you see a node you've already saved, there's a cycle.\n\n\`\`\`csharp\nvar seen = new HashSet<ListNode>();\nvar cur = head;\nwhile (cur != null) {\n    if (seen.Contains(cur)) return true;\n    seen.Add(cur);\n    cur = cur.next;\n}\nreturn false;\n\`\`\`\n\n**Time:** O(n) — **Space:** O(n) — works, but uses extra memory.\n\n---\n\n### Approach 2 — Fast and slow pointers (Floyd's algorithm)\n\nNo extra memory. Two pointers start at head. Slow moves 1 step. Fast moves 2 steps.\n\n**No cycle:** fast runs off the end → return false\n\n**Cycle:** fast laps slow and they land on the same node → return true\n\n**Why do they always meet?**\n\nOnce fast enters the cycle, measure the gap between fast and slow in nodes (going forward around the cycle).\n\nEach step: slow moves 1, fast moves 2 → gap shrinks by exactly 1.\n\n\`\`\`\ngap = 4 → 3 → 2 → 1 → 0  ← they meet\n\`\`\`\n\nThe gap starts at some number and decrements by 1 every step. It must hit 0 — it can never skip over 0 because it only ever decrements by 1. When the gap is 0, slow == fast.\n\n\`\`\`\nList: 3 → 2 → 0 → -4\n               ↑         |\n               └─────────┘\n\nStart:   slow=3  fast=3\nStep 1:  slow=2  fast=0\nStep 2:  slow=0  fast=2    (fast lapped around)\nStep 3:  slow=-4 fast=-4   ← MEET → cycle detected\n\`\`\`\n\n**No cycle:**\n\`\`\`\n1 → 2 → null\n\nStep 1:  slow=2  fast=null → loop exits → return false\n\`\`\`\n\n---\n\n### Why check slow == fast AFTER moving?\n\nBoth start at head. If you check before moving, slow==fast immediately (both at head) and you'd return true wrongly. Move first, then check.\n\n---\n\n### Why the loop condition is fast != null && fast.next != null?\n\n- \`fast != null\` — fast itself might be null (even-length list)\n- \`fast.next != null\` — you're about to do fast.next.next, so fast.next must exist first\n\nIf either is null, there's no cycle — a cycle has no null.\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic bool HasCycle(ListNode head) {\n    ListNode slow = head;\n    ListNode fast = head;\n\n    while (fast != null && fast.next != null) {\n        slow = slow.next;\n        fast = fast.next.next;\n\n        if (slow == fast) return true;\n    }\n\n    return false;\n}\n\`\`\`\n\n---\n\n### Complexity\n\n| | HashSet | Fast/Slow |\n|---|---|---|\n| Time | O(n) | O(n) |\n| Space | O(n) | O(1) |`,
@@ -6930,6 +6930,177 @@ If either of these isn't true, the input is invalid (but the problem says input 
 | Time | O(n) — single pass through the tokens array |
 | Space | O(n) — stack holds at most all the numbers (roughly n/2 in the worst case) |`,
       2: `## 2. Add Two Numbers\n\n### What is the problem asking?\n\nYou have two linked lists, each representing a number in **reverse digit order**. Add them and return the sum as a linked list, also in reverse order.\n\n\`\`\`\nl1:  2 → 4 → 3       (represents 342)\nl2:  5 → 6 → 4       (represents 465)\nout: 7 → 0 → 8       (represents 807 = 342 + 465)\n\`\`\`\n\nReverse order is actually convenient — the ones digit is first, so you can add left-to-right just like you would on paper right-to-left.\n\n---\n\n### Step 1 — Walk both lists together\n\nJust like adding two numbers on paper: process one column at a time.\n\n\`\`\`\n  l1:  2   4   3\n  l2:  5   6   4\n       ↓   ↓   ↓\nsum:   7  10   7\n\`\`\`\n\nBut what if the lists are different lengths?\n\n\`\`\`\nl1:  9 → 9 → 9 → 9 → 9 → 9 → 9\nl2:  9 → 9 → 9 → 9\n\`\`\`\n\nThe shorter list runs out first. When a list is exhausted, treat its digit as 0 — same as how you'd pad with leading zeros on paper.\n\nSo the while loop uses **||** (keep going if EITHER has digits left), not **&&**:\n\n\`\`\`csharp\nwhile (firstCurr != null || secondCurr != null)\n\`\`\`\n\nInside, safely get each value:\n\n\`\`\`csharp\nint a = firstCurr != null ? firstCurr.val : 0;\nint b = secondCurr != null ? secondCurr.val : 0;\n\`\`\`\n\n---\n\n### Step 2 — Handle the carry\n\nWhen digits sum to 10+, you carry to the next column. For any sum:\n\n\`\`\`\ndigit = sum % 10    (ones place — the digit you keep)\ncarry = sum / 10    (tens place — what carries forward)\n\`\`\`\n\nExample: 9 + 9 + 1 (carry) = 19 → digit = 9, carry = 1\n\ncarry persists across iterations — declare it outside the loop.\n\n---\n\n### Step 3 — Build the result with a dummy head\n\nYou don't know the first result node until you compute the first sum. A dummy node gives you something to attach to from the start:\n\n\`\`\`\ndummy[0] → (nothing yet)\nresultCurr → dummy\n\`\`\`\n\nEach iteration: create a new node and link it:\n\n\`\`\`csharp\nresultCurr.next = new ListNode(digit);\nresultCurr = resultCurr.next;\n\`\`\`\n\nAfter the loop, return dummy.next (skip the throwaway 0).\n\n---\n\n### Step 4 — Don't forget the final carry\n\n\`\`\`\n  999 + 1 = 1000\n  9 → 9 → 9\n  1\n  ─────────\n  0 → 0 → 0 → 1   ← this last 1 comes from carry AFTER the loop\n\`\`\`\n\nAfter the while loop:\n\n\`\`\`csharp\nif (carry > 0) {\n    resultCurr.next = new ListNode(carry);\n}\n\`\`\`\n\n---\n\n### Full solution\n\n\`\`\`csharp\npublic ListNode AddTwoNumbers(ListNode l1, ListNode l2) {\n    ListNode dummy = new ListNode(0);\n    ListNode curr = dummy;\n    int carry = 0;\n\n    while (l1 != null || l2 != null) {\n        int a = l1 != null ? l1.val : 0;\n        int b = l2 != null ? l2.val : 0;\n        int sum = a + b + carry;\n\n        carry = sum / 10;\n        curr.next = new ListNode(sum % 10);\n        curr = curr.next;\n\n        if (l1 != null) l1 = l1.next;\n        if (l2 != null) l2 = l2.next;\n    }\n\n    if (carry > 0) {\n        curr.next = new ListNode(carry);\n    }\n\n    return dummy.next;\n}\n\`\`\`\n\n---\n\n### Common mistakes\n\n| Mistake | Why it breaks |\n|---|---|\n| while (l1 != null **&&** l2 != null) | Stops early when lists differ in length |\n| l1.val when l1 could be null | NullReferenceException — check before accessing |\n| Forgetting carry after loop | Loses the leading digit (e.g. 999+1 = 000 instead of 0001) |\n| curr.val = digit instead of curr.next = new ListNode(digit) | Doesn't create new nodes — crashes on next iteration |\n| Shadowing carry inside the loop | Outer carry never updates, always 0 |\n\n---\n\n### Complexity\n\n| | |\n|---|---|\n| Time | O(max(n, m)) — one pass through the longer list |\n| Space | O(max(n, m)) — the result list has at most max(n,m) + 1 nodes |`,
+      973: `## 973. K Closest Points to Origin
+
+### What is the problem actually asking?
+
+You have a bunch of points on a 2D grid. Find the k points that are closest to (0, 0). The answer can be in any order.
+
+\`\`\`
+points = [[1,3], [-2,2]], k = 1
+
+Distances from origin:
+  [1,3]  → √(1² + 3²) = √10 ≈ 3.16
+  [-2,2] → √(4 + 4)   = √8  ≈ 2.83  ← closer
+
+Answer: [[-2,2]]
+\`\`\`
+
+---
+
+### First key insight: skip the square root
+
+You never need Math.Sqrt. Why? Because if √a < √b, then a < b. Comparing squared distances gives the exact same ordering.
+
+\`\`\`
+dist²([1,3])  = 1 + 9  = 10
+dist²([-2,2]) = 4 + 4  = 8   ← smaller
+
+8 < 10, so [-2,2] is closer. Same answer, no sqrt needed.
+\`\`\`
+
+This avoids floating-point issues and is faster.
+
+---
+
+### Brute force: sort everything
+
+Compute dist² for every point, sort by it, take the first k.
+
+\`\`\`
+points = [[3,3],[5,-1],[-2,4]], k = 2
+
+dist²:
+  [3,3]  → 9 + 9   = 18
+  [5,-1] → 25 + 1  = 26
+  [-2,4] → 4 + 16  = 20
+
+Sorted: [3,3](18), [-2,4](20), [5,-1](26)
+Take first 2: [[3,3], [-2,4]]  ✓
+\`\`\`
+
+This works! Time: O(n log n) for sorting. But can we do better when k is small compared to n?
+
+---
+
+### The heap insight: you only care about k points
+
+Imagine k = 2 and you have 1000 points. Sorting all 1000 is wasteful — you only need the 2 closest.
+
+Think of it like a **"hall of fame" board** with k slots:
+
+1. Fill the first k slots with the first k points (no questions asked)
+2. For each remaining point, compare it to the **WORST** (farthest) point on the board
+3. If the new point is closer → kick the worst out, put the new one in
+4. If not → skip it
+
+To efficiently find and remove the worst (farthest) point, use a **max-heap** — it keeps the largest distance at the top, ready to compare and evict.
+
+---
+
+### Walking through the max-heap approach
+
+\`\`\`
+points = [[3,3],[5,-1],[-2,4],[1,1]], k = 2
+
+Step 1: [3,3] → dist²=18, heap has room → push
+  heap top: 18:[3,3]
+
+Step 2: [5,-1] → dist²=26, heap has room → push
+  heap top: 26:[5,-1]        ← max-heap: farthest on top
+
+Step 3: [-2,4] → dist²=20
+  heap full (size=k). Compare 20 vs top 26.
+  20 < 26 → new point is closer! Evict [5,-1], push [-2,4].
+  heap top: 20:[-2,4]
+
+Step 4: [1,1] → dist²=2
+  Compare 2 vs top 20.
+  2 < 20 → closer! Evict [-2,4], push [1,1].
+  heap top: 18:[3,3]
+
+Drain heap → [[3,3], [1,1]]  ← the 2 closest points  ✓
+\`\`\`
+
+---
+
+### C# PriorityQueue gotcha
+
+C#'s PriorityQueue is a **min-heap** by default — it dequeues the **smallest** priority first. But we need a max-heap (farthest on top so we can evict it).
+
+**Trick: negate the distance.** If dist² = 18, store priority = −18.
+
+\`\`\`
+dist² = 18 → priority = -18
+dist² = 26 → priority = -26  ← min-heap sees this as "smallest"
+                                 → dequeued first
+\`\`\`
+
+So the point with the **largest** actual distance sits at the front of the min-heap. Exactly what we want.
+
+When we Peek and get priority −26, the actual dist² is 26 (just negate back).
+
+---
+
+### Full solution
+
+\`\`\`csharp
+public int[][] KClosest(int[][] points, int k) {
+    // max-heap via negated priorities
+    var heap = new PriorityQueue<int[], int>();
+
+    foreach (var p in points) {
+        int dist = p[0] * p[0] + p[1] * p[1];
+
+        if (heap.Count < k) {
+            heap.Enqueue(p, -dist);
+        } else {
+            heap.TryPeek(out _, out int topPriority);
+            // topPriority is negative, so -topPriority = actual farthest dist
+            if (dist < -topPriority) {
+                heap.DequeueEnqueue(p, -dist);
+            }
+        }
+    }
+
+    int[][] result = new int[k][];
+    for (int i = 0; i < k; i++) {
+        result[i] = heap.Dequeue();
+    }
+    return result;
+}
+\`\`\`
+
+---
+
+### Why this beats sorting
+
+| Approach | Time | Space |
+|---|---|---|
+| Sort all points | O(n log n) | O(n) |
+| Max-heap of size k | O(n log k) | O(k) |
+
+When k is much smaller than n (e.g. k=3, n=10000), log k is much smaller than log n. The heap only ever holds k elements, so each push/pop is O(log k), and you do n of them.
+
+---
+
+### Common mistakes
+
+| Mistake | What happens |
+|---|---|
+| Using min-heap without negation | Evicts the CLOSEST point instead of the farthest — inverted |
+| Computing Math.Sqrt | Unnecessary work and floating-point noise |
+| Forgetting the heap.Count < k check | Peek on an empty heap → crash |
+| Comparing dist > topPriority (no negation) | Wrong comparison — topPriority is negative |
+
+---
+
+### Complexity
+
+| | |
+|---|---|
+| Time | O(n log k) — each of n points costs O(log k) for heap operations |
+| Space | O(k) — heap never holds more than k points |`,
     };
     for (const [pid, text] of Object.entries(SEEDED_GUIDES)) {
       const vkey = `dsa_guide_v_${pid}`;
