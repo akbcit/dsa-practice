@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aditya Kumar | Backend Software Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #111827;
+    --ink-mid: #374151;
+    --ink-light: #4b5563;
+    --ink-muted: #6b7280;
+    --accent: #1d4ed8;
+    --accent-bg: #eff6ff;
+    --bg: #ffffff;
+    --border: #e5e7eb;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--ink);
+    background: #d1d5db;
+    line-height: 1.5;
+    font-size: 12pt;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    width: 8.5in;
+    min-height: 11in;
+    margin: 20px auto;
+    background: var(--bg);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  @page { size: letter; margin: 0; }
+
+  @media print {
+    body { background: white; margin: 0; padding: 0; }
+    .page { margin: 0; box-shadow: none; width: 100%; min-height: auto; }
+    .no-print { display: none !important; }
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    background: #0f172a;
+    color: #fff;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .headshot {
+    width: 82px;
+    height: 82px;
+    min-width: 82px;
+    min-height: 82px;
+    border-radius: 50%;
+    background-image: url('headshot.jpg');
+    background-size: 300%;
+    background-position: 38% 18%;
+    border: 3px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+
+  .header-info { flex: 1; }
+
+  .header h1 {
+    font-size: 20pt;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    line-height: 1.15;
+  }
+
+  .header .role {
+    font-size: 11pt;
+    font-weight: 500;
+    color: #93c5fd;
+    margin-top: 1px;
+    margin-bottom: 5px;
+  }
+
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    font-size: 9.5pt;
+    color: #cbd5e1;
+  }
+
+  .contact a { color: #93c5fd; text-decoration: none; }
+
+  /* ─── MAIN CONTENT ─── */
+  .main {
+    padding: 18px 32px 20px;
+  }
+
+  /* ─── SECTIONS ─── */
+  .section {
+    margin-bottom: 13px;
+  }
+
+  .section-head {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 2px;
+    margin-bottom: 8px;
+  }
+
+  /* ─── SKILLS ─── */
+  .skills-block {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 0;
+    font-size: 9pt;
+    line-height: 1.5;
+  }
+
+  .skills-block .sk {
+    display: inline;
+  }
+
+  .sk-label {
+    font-weight: 700;
+    color: var(--ink);
+    margin-right: 4px;
+  }
+
+  .sk-list {
+    color: var(--ink-mid);
+    margin-right: 18px;
+  }
+
+  /* ─── EXPERIENCE ─── */
+  .job {
+    margin-bottom: 13px;
+  }
+
+  .job-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .job-title {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .job-date {
+    font-size: 8.5pt;
+    color: var(--ink-muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .job-co {
+    font-size: 9.5pt;
+    color: var(--ink-light);
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+
+  .promoted {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 8.5pt;
+    font-weight: 700;
+    padding: 0px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.3px;
+  }
+
+  ul { list-style: none; padding: 0; }
+
+  .job ul li {
+    position: relative;
+    padding-left: 14px;
+    margin-bottom: 3px;
+    font-size: 9.25pt;
+    color: var(--ink-mid);
+    line-height: 1.45;
+  }
+
+  .job ul li::before {
+    content: "\2022";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 10pt;
+    line-height: 1.3;
+  }
+
+  /* ─── PROJECTS ─── */
+  .project-title {
+    font-weight: 700;
+    font-size: 9.5pt;
+    color: var(--ink);
+  }
+
+  .project-title a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 8.5pt;
+    margin-left: 4px;
+  }
+
+  .project-desc {
+    font-size: 9pt;
+    color: var(--ink-mid);
+    margin-top: 2px;
+    line-height: 1.45;
+  }
+
+  /* ─── TOOLBAR ─── */
+  .toolbar {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .toolbar button {
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .btn-pdf { background: #1d4ed8; color: white; }
+  .btn-pdf:hover { background: #1e40af; }
+  .btn-toggle { background: #374151; color: white; }
+  .btn-toggle:hover { background: #4b5563; }
+
+  .variant-label {
+    background: #059669;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .page.no-photo .headshot { display: none; }
+</style>
+</head>
+<body>
+
+<div class="page" id="resume">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="headshot" id="photo"></div>
+    <div class="header-info">
+      <h1>Aditya Kumar</h1>
+      <div class="role">Backend Software Developer · C# / .NET · 2+ Years</div>
+      <div class="contact">
+        <span>Vancouver, BC</span>
+        <span><a href="mailto:aditya.van.dev@gmail.com">aditya.van.dev@gmail.com</a></span>
+        <span>604-783-3917</span>
+        <span><a href="https://github.com/akbcit">github.com/akbcit</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="main">
+
+    <div class="section">
+      <div class="section-head">Technical Skills</div>
+      <div class="skills-block">
+        <span class="sk"><span class="sk-label">Languages:</span><span class="sk-list">C#, SQL, TypeScript, JavaScript, Python</span></span>
+        <span class="sk"><span class="sk-label">Backend:</span><span class="sk-list">ASP.NET Core, .NET 8, Entity Framework Core, LINQ, REST APIs, WebSockets</span></span>
+        <span class="sk"><span class="sk-label">Data:</span><span class="sk-list">Apache Cassandra, PostgreSQL, MongoDB, Redis</span></span>
+        <span class="sk"><span class="sk-label">DevOps & Cloud:</span><span class="sk-list">Docker, Azure DevOps, CI/CD, AWS (EC2), OpenTelemetry, Grafana Stack</span></span>
+        <span class="sk"><span class="sk-label">Architecture:</span><span class="sk-list">Microservices, BFF Pattern, Dependency Injection, Domain Modelling, TDD, Agile/Scrum</span></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">Experience</div>
+
+      <div class="job">
+        <div class="job-top">
+          <div class="job-title">Software Developer</div>
+          <div class="job-date">Jun 2024 to Present</div>
+        </div>
+        <div class="job-co">PDF Solutions | Semiconductor Manufacturing Quality Analytics, Vancouver, BC</div>
+        <ul>
+          <li>Founding developer and largest code contributor on a .NET Core analysis orchestration service now maintained by a 5-person team; designed and built the system end-to-end from requirements through production deployment</li>
+          <li>Architected the service to decompose semiconductor analysis documents into directed acyclic graphs (DAGs), then built the execution engine that resolves multi-level dependencies, determines computation order, and triggers downstream recomputation</li>
+          <li>Built the Cassandra persistence layer for deeply nested analysis object graphs with complex parent-child hierarchies, handling payloads serializing to thousands of lines of JSON</li>
+          <li>Designed the caching and serving layer between the analysis backend and frontend clients, optimizing large visualization payloads to eliminate redundant API calls and recomputation</li>
+          <li>Built the workflow submission layer that integrates with the platform's calculation engine, managing job dispatch, status tracking, and result retrieval for long-running analytical computations</li>
+          <li>Pioneered Docker containerization and OpenTelemetry observability for C# services — wrote Dockerfiles and Compose configs adopted as the team's CI/CD baseline, and integrated distributed tracing, structured logging, and metrics via Grafana stack (Loki, Tempo, Prometheus)</li>
+          <li>Drive quality through TDD (unit + integration tests); collaborate directly with QA, product managers, and fab customers to triage and resolve production issues</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-top">
+          <div class="job-title">Software Developer (Capstone)</div>
+          <div class="job-date">Sep 2023 to Jun 2024</div>
+        </div>
+        <div class="job-co">BCIT (British Columbia Institute of Technology)</div>
+        <ul>
+          <li>Built an order and inventory management system for a Vancouver-based meal prep company in a team of 4: chefs use it to manage clients, track inventory, and plan meals</li>
+          <li>Node.js/Express API with PostgreSQL, RESTful endpoint design, database schema and migration authoring, AWS Cognito auth, CI/CD deployment to AWS</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-top">
+          <div class="job-title">HR Business Partner & Compensation Analyst</div>
+          <div class="job-date">May 2016 to Sep 2023</div>
+        </div>
+        <div class="job-co">Amazon, Newcrest Mining, Mercer, Khatabook, CoinSwitch</div>
+        <ul>
+          <li>7 years across Amazon, mining, consulting, and startups — ran compensation analytics and headcount planning for 2,000+ employees. Career pivot to software development in 2023</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section" style="margin-bottom:0">
+      <div class="section-head">Education & Projects</div>
+      <div style="font-size:9pt;color:var(--ink);margin-bottom:6px"><strong>BCIT</strong> Software Systems Developer, 2024 &nbsp;&bull;&nbsp; <strong>XLRI</strong> PGD, HR &nbsp;&bull;&nbsp; <strong>NSIT Delhi</strong> B.Eng</div>
+      <div class="project-title">DSA Practice IDE & Visualizer <a href="https://github.com/akbcit/dsa-practice">github.com/akbcit/dsa-practice</a></div>
+      <p class="project-desc">Browser-based C# IDE (Monaco Editor, Node.js, .NET CLI) with interactive algorithm visualizers and gamified progress tracking. 66+ LeetCode problems solved.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar no-print" id="toolbar">
+  <span class="variant-label">.NET / BACKEND</span>
+  <button class="btn-toggle" onclick="togglePhoto()">Toggle Photo</button>
+  <button class="btn-pdf" onclick="savePDF()">Save as PDF</button>
+</div>
+
+<script>
+function togglePhoto() {
+  document.getElementById('resume').classList.toggle('no-photo');
+}
+
+function savePDF() {
+  var btn = document.querySelector('.btn-pdf');
+  btn.textContent = 'Generating...';
+  btn.disabled = true;
+  fetch('/download-pdf?variant=dotnet')
+    .then(function(r) { return r.blob(); })
+    .then(function(blob) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Aditya_Kumar_Resume_Backend.pdf';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      btn.textContent = 'Save as PDF';
+      btn.disabled = false;
+    })
+    .catch(function(err) {
+      alert('Error: ' + err);
+      btn.textContent = 'Save as PDF';
+      btn.disabled = false;
+    });
+}
+</script>
+
+</body>
+</html>
